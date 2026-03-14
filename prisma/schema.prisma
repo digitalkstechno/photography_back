@@ -1,0 +1,168 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+}
+
+model PartyType {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  parties Party[]
+}
+
+model Party {
+  id          Int      @id @default(autoincrement())
+  name        String
+  phone       String?
+  email       String?
+  address     String?
+  partyTypeId Int
+  createdAt   DateTime @default(now())
+
+  partyType    PartyType     @relation(fields: [partyTypeId], references: [id])
+  transactions Transaction[]
+
+  tags PartyTag[]
+
+  @@index([partyTypeId])
+}
+
+model Tag {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  partyTags PartyTag[]
+}
+
+model PartyTag {
+  id      Int @id @default(autoincrement())
+  partyId Int
+  tagId   Int
+
+  party Party @relation(fields: [partyId], references: [id])
+  tag   Tag   @relation(fields: [tagId], references: [id])
+
+  @@index([partyId])
+  @@index([tagId])
+}
+
+model Unit {
+  id        Int      @id @default(autoincrement())
+  name      String
+  shortName String?
+  createdAt DateTime @default(now())
+
+  items Item[]
+}
+
+model ItemCategory {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  items Item[]
+}
+
+model Item {
+  id         Int      @id @default(autoincrement())
+  name       String
+  price      Float
+  unitId     Int
+  categoryId Int?
+  createdAt  DateTime @default(now())
+
+  unit     Unit          @relation(fields: [unitId], references: [id])
+  category ItemCategory? @relation(fields: [categoryId], references: [id])
+
+  transactionItems TransactionItem[]
+
+  @@index([unitId])
+}
+
+model TransactionType {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  transactions Transaction[]
+}
+
+model TransactionStatus {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  transactions Transaction[]
+}
+
+model Transaction {
+  id                Int      @id @default(autoincrement())
+  partyId           Int
+  transactionTypeId Int
+  statusId          Int
+  referenceId       Int?
+  total             Float
+  notes             String?
+  createdAt         DateTime @default(now())
+
+  party           Party             @relation(fields: [partyId], references: [id])
+  transactionType TransactionType   @relation(fields: [transactionTypeId], references: [id])
+  status          TransactionStatus @relation(fields: [statusId], references: [id])
+
+  items    TransactionItem[]
+  payments Payment[]
+
+  @@index([partyId])
+  @@index([transactionTypeId])
+  @@index([statusId])
+}
+
+model TransactionItem {
+  id            Int    @id @default(autoincrement())
+  transactionId Int
+  itemId        Int
+  quantity      Float
+  price         Float
+  total         Float?
+
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+  item        Item        @relation(fields: [itemId], references: [id])
+
+  @@index([transactionId])
+  @@index([itemId])
+}
+
+model PaymentMethod {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  payments Payment[]
+}
+
+model Payment {
+  id              Int      @id @default(autoincrement())
+  transactionId   Int
+  paymentMethodId Int
+  amount          Float
+  reference       String?
+  createdAt       DateTime @default(now())
+
+  transaction   Transaction   @relation(fields: [transactionId], references: [id])
+  paymentMethod PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+
+  @@index([transactionId])
+}
