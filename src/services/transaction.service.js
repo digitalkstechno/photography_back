@@ -29,7 +29,8 @@ const fullInclude = {
     transactionType: true,
     status: true,
     items: { include: { item: { include: { unit: true } } } },
-    payments: { include: { paymentMethod: true } }
+    payments: { include: { paymentMethod: true } },
+    package: true
 }
 
 export const transactionService = {
@@ -94,7 +95,7 @@ export const transactionService = {
         })
     },
 
-    createSalesQuotation: async ({ partyId, items = [], notes }) => {
+    createSalesQuotation: async ({ partyId, items = [], notes, packageId }) => {
         const transactionTypeId = await getTypeId("SALE_QUOTATION")
         const statusId = await getStatusId("UNPAID")
         const total = sumLineTotals(items)
@@ -105,13 +106,14 @@ export const transactionService = {
                 transactionTypeId,
                 statusId,
                 total,
+                packageId: packageId ? Number(packageId) : null,
                 notes: notes ?? null
             },
             items
         })
     },
 
-    createSalesInvoice: async ({ partyId, items = [], notes }) => {
+    createSalesInvoice: async ({ partyId, items = [], notes, packageId }) => {
         const transactionTypeId = await getTypeId("SALE_INVOICE")
         const statusId = await getStatusId("UNPAID")
         const total = sumLineTotals(items)
@@ -122,6 +124,7 @@ export const transactionService = {
                 transactionTypeId,
                 statusId,
                 total,
+                packageId: packageId ? Number(packageId) : null,
                 notes: notes ?? null
             },
             items
@@ -165,6 +168,7 @@ export const transactionService = {
                     transactionTypeId: invoiceTypeId,
                     statusId,
                     referenceId: quotation.id,
+                    packageId: quotation.packageId,
                     total: quotation.total,
                     notes: quotation.notes ?? null
                 }

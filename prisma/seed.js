@@ -125,10 +125,107 @@ async function main() {
     }
   })
 
-  // ── Sample Parties (Customer & Vendor) ──
-  const customerType = await prisma.partyType.findUnique({ where: { name: "Customer" } })
-  const vendorType = await prisma.partyType.findUnique({ where: { name: "Vendor" } })
+  // ── Team & Freelancers ──
+  const staffHashedPassword = await bcrypt.hash("staff123", 10)
+  const users = [
+    { name: "Manager User", email: "manager@gmail.com", password: staffHashedPassword, role: "manager", phone: "1234567890", isFreelance: false },
+    { name: "Staff User", email: "staff@gmail.com", password: staffHashedPassword, role: "staff", phone: "1234567891", isFreelance: false },
+    { name: "John Freelancer", email: "john@freelance.com", password: staffHashedPassword, role: "freelancer", phone: "1234567892", skillset: "Candid Photography, Drone", isFreelance: true, charges: 5000 },
+    { name: "Mary Freelancer", email: "mary@freelance.com", password: staffHashedPassword, role: "freelancer", phone: "1234567893", skillset: "Cinematography, Editing", isFreelance: true, charges: 6000 }
+  ]
 
+  for (const user of users) {
+    await prisma.user.upsert({
+      where: { email: user.email },
+      update: {},
+      create: user
+    })
+  }
+
+  // ── Equipment ──
+  const admin = await prisma.user.findUnique({ where: { email: "admin@gmail.com" } })
+  const equipment = [
+    { name: "Sony A7R IV", type: "Camera", serialNo: "SN12345", dailyRate: 2000, ownerId: admin.id, status: "AVAILABLE" },
+    { name: "DJI Mavic 3", type: "Drone", serialNo: "SN67890", dailyRate: 3500, ownerId: admin.id, status: "AVAILABLE" },
+    { name: "Godox AD600 Pro", type: "Light", serialNo: "SN11223", dailyRate: 500, ownerId: admin.id, status: "AVAILABLE" }
+  ]
+
+  for (const item of equipment) {
+    const existing = await prisma.equipment.findFirst({ where: { serialNo: item.serialNo } })
+    if (!existing) {
+      await prisma.equipment.create({ data: item })
+    }
+  }
+
+  // ── Packages ──
+  const weddingShootItem = await prisma.item.findFirst({ where: { name: "Wedding Shoot" } })
+  const weddingVideoItem = await prisma.item.findFirst({ where: { name: "Wedding Videography" } })
+  const droneShootItem = await prisma.item.findFirst({ where: { name: "Drone Shoot" } })
+  const albumPrintItem = await prisma.item.findFirst({ where: { name: "Album Printing" } })
+
+  const packageData = [
+    {
+      name: "Basic Wedding Package",
+      description: "Photography + Videography for 1 day",
+      price: 50000,
+      days: 1,
+      items: {
+        create: [
+          { itemId: weddingShootItem.id, quantity: 1 },
+          { itemId: weddingVideoItem.id, quantity: 1 }
+        ]
+      }
+    },
+    {
+      name: "Premium Wedding Package",
+      description: "Photography + Videography + Drone + Album for 2 days",
+      price: 120000,
+      days: 2,
+      items: {
+        create: [
+          { itemId: weddingShootItem.id, quantity: 2 },
+          { itemId: weddingVideoItem.id, quantity: 2 },
+          { itemId: droneShootItem.id, quantity: 2 },
+          { itemId: albumPrintItem.id, quantity: 1 }
+        ]
+      }
+    }
+  ]
+
+  for (const pkg of packageData) {
+    const existing = await prisma.package.findFirst({ where: { name: pkg.name } })
+    if (!existing) {
+      await prisma.package.create({ data: pkg })
+    }
+  }
+
+  // ── Availability (Holidays) ──
+  const holiDate = new Date("2026-03-25")
+  const existingHoli = await prisma.availability.findFirst({ where: { date: holiDate, userId: null } })
+  if (!existingHoli) {
+    await prisma.availability.create({
+      data: {
+        date: holiDate,
+        userId: null,
+        isBlocked: true,
+        reason: "Public Holiday - Holi"
+      }
+    })
+  }
+
+  // ── Sample Transactions (Existing logic continued) ──
+  const saleQuotationType = await prisma.transactionType.findUnique({ where: { name: "SALE_QUOTATION" } })
+  const saleInvoiceType = await prisma.transactionType.findUnique({ where: { name: "SALE_INVOICE" } })
+  
+  const unpaidStatus = await prisma.transactionStatus.findUnique({ where: { name: "UNPAID" } })
+  const paidStatus = await prisma.transactionStatus.findUnique({ where: { name: "PAID" } })
+
+  const cashMethod = await prisma.paymentMethod.findUnique({ where: { name: "Cash" } })
+
+  const weddingShoot = await prisma.item.findFirst({ where: { name: "Wedding Shoot" } })
+  const droneShoot = await prisma.item.findFirst({ where: { name: "Drone Shoot" } })
+
+  const customerType = await prisma.partyType.findUnique({ where: { name: "Customer" } })
   let sampleCustomer = await prisma.party.findFirst({ where: { name: "John Doe (Customer)" } })
   if (!sampleCustomer) {
     sampleCustomer = await prisma.party.create({
@@ -140,30 +237,6 @@ async function main() {
       }
     })
   }
-
-  let sampleVendor = await prisma.party.findFirst({ where: { name: "Tech Store (Vendor)" } })
-  if (!sampleVendor) {
-    sampleVendor = await prisma.party.create({
-      data: {
-        name: "Tech Store (Vendor)",
-        phone: "9988776655",
-        address: "456 Market St, City",
-        partyTypeId: vendorType.id
-      }
-    })
-  }
-
-  // ── Sample Transactions ──
-  const saleQuotationType = await prisma.transactionType.findUnique({ where: { name: "SALE_QUOTATION" } })
-  const saleInvoiceType = await prisma.transactionType.findUnique({ where: { name: "SALE_INVOICE" } })
-  
-  const unpaidStatus = await prisma.transactionStatus.findUnique({ where: { name: "UNPAID" } })
-  const paidStatus = await prisma.transactionStatus.findUnique({ where: { name: "PAID" } })
-
-  const cashMethod = await prisma.paymentMethod.findUnique({ where: { name: "Cash" } })
-
-  const weddingShoot = await prisma.item.findFirst({ where: { name: "Wedding Shoot" } })
-  const droneShoot = await prisma.item.findFirst({ where: { name: "Drone Shoot" } })
 
   const existingQuotation = await prisma.transaction.findFirst({
     where: { partyId: sampleCustomer.id, transactionTypeId: saleQuotationType.id }
@@ -209,7 +282,57 @@ async function main() {
     })
   }
 
+  // ── Standalone Ledger Entries (No Invoice Required) ──
+  const upiMethod = await prisma.paymentMethod.findUnique({ where: { name: "UPI" } })
+  const bankMethod = await prisma.paymentMethod.findUnique({ where: { name: "Bank" } })
+
+  // 1. Direct Payment from Client (CREDIT/IN)
+  const existingLedger1 = await prisma.ledgerEntry.findFirst({ where: { description: "Advance for Engagement Shoot" } })
+  if (!existingLedger1) {
+    await prisma.ledgerEntry.create({
+      data: {
+        partyId: sampleCustomer.id,
+        amount: 5000,
+        type: "CREDIT",
+        category: "Advance",
+        description: "Advance for Engagement Shoot",
+        paymentMethodId: upiMethod.id,
+        date: new Date()
+      }
+    })
+  }
+
+  // 2. Direct Expense to Vendor (DEBIT/OUT)
+  const vendorType = await prisma.partyType.findUnique({ where: { name: "Vendor" } })
+  let sampleVendor = await prisma.party.findFirst({ where: { name: "Tech Store (Vendor)" } })
+  if (!sampleVendor) {
+    sampleVendor = await prisma.party.create({
+      data: {
+        name: "Tech Store (Vendor)",
+        phone: "9988776655",
+        address: "456 Market St, City",
+        partyTypeId: vendorType.id
+      }
+    })
+  }
+
+  const existingLedger2 = await prisma.ledgerEntry.findFirst({ where: { description: "Rent for additional flash unit" } })
+  if (!existingLedger2) {
+    await prisma.ledgerEntry.create({
+      data: {
+        partyId: sampleVendor.id,
+        amount: 800,
+        type: "DEBIT",
+        category: "Rental Expense",
+        description: "Rent for additional flash unit",
+        paymentMethodId: cashMethod.id,
+        date: new Date()
+      }
+    })
+  }
+
   console.log("Seed completed successfully!")
+
 }
 
 main()

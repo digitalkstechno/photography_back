@@ -3,7 +3,7 @@ import prisma from "../config/prisma.js"
 export const dashboardService = {
 
   getSummary: async () => {
-    const [invoices, payments] = await Promise.all([
+    const [invoices, payments, ledger] = await Promise.all([
       prisma.transaction.findMany({
         where: {
           transactionType: {
@@ -15,6 +15,10 @@ export const dashboardService = {
       prisma.payment.aggregate({
         _sum: { amount: true },
         _count: true
+      }),
+      prisma.ledgerEntry.groupBy({
+        by: ['type'],
+        _sum: { amount: true }
       })
     ])
 
@@ -25,6 +29,9 @@ export const dashboardService = {
     const saleInvoices = invoices.filter(tx => tx.transactionType.name === "SALE_INVOICE")
     const purchaseInvoices = invoices.filter(tx => tx.transactionType.name === "PURCHASE_INVOICE")
 
+    const incomeLedger = ledger.find(l => l.type === 'CREDIT')?._sum.amount || 0
+    const expenseLedger = ledger.find(l => l.type === 'DEBIT')?._sum.amount || 0
+
     return {
       totalInvoices: invoices.length,
       totalSaleInvoices: saleInvoices.length,
@@ -32,7 +39,12 @@ export const dashboardService = {
       totalInvoiced: Math.round(totalInvoiced * 100) / 100,
       totalPaid: Math.round(totalPaid * 100) / 100,
       totalOutstanding: Math.round(totalOutstanding * 100) / 100,
-      totalPayments: payments._count
+      totalPayments: payments._count,
+      ledger: {
+        totalIncome: Math.round(incomeLedger * 100) / 100,
+        totalExpenses: Math.round(expenseLedger * 100) / 100,
+        netBalance: Math.round((incomeLedger - expenseLedger) * 100) / 100
+      }
     }
   },
 

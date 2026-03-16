@@ -16,6 +16,15 @@ export const register = async (req, res, next) => {
 
 }
 
+export const getUsers = async (req, res, next) => {
+  try {
+    const users = await authService.findAll()
+    res.json(users)
+  } catch (err) {
+    next(err)
+  }
+}
+
 export const login = async (req, res, next) => {
 
   try {
