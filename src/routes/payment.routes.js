@@ -3,6 +3,7 @@ import { Router } from "express"
 import {
   getPayments,
   getPaymentById,
+  getPaymentsByTransaction,
   createPayment,
   deletePayment
 } from "../controller/payment.controller.js"
@@ -15,6 +16,7 @@ const router = Router()
 router.use(authMiddleware)
 
 router.get("/", getPayments)
+router.get("/transaction/:transactionId", getPaymentsByTransaction)
 router.get("/:id", getPaymentById)
 router.post("/", createPayment)
 router.delete("/:id", deletePayment)

@@ -8,7 +8,8 @@ import {
   deleteParty,
   getCustomers,
   getVendors,
-  getPartyLedger
+  getPartyLedger,
+  searchParties
 } from "../controller/party.controller.js"
 
 import { authMiddleware } from "../middlewares/auth.middleware.js"
@@ -19,6 +20,7 @@ const router = Router()
 router.use(authMiddleware)
 
 router.get("/", getParties)
+router.get("/search", searchParties)
 router.get("/customers", getCustomers)
 router.get("/vendors", getVendors)
 router.get("/:id", getPartyById)

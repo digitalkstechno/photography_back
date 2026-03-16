@@ -65,7 +65,7 @@ model PartyTag {
 
 model Unit {
   id        Int      @id @default(autoincrement())
-  name      String
+  name      String   @unique
   shortName String?
   createdAt DateTime @default(now())
 

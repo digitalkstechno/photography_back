@@ -39,6 +39,7 @@ export const getPurchaseInvoices = async (req, res, next) => {
 export const getTransactionById = async (req, res, next) => {
   try {
     const data = await transactionService.findById(Number(req.params.id))
+    if (!data) return res.status(404).json({ message: "Transaction not found" })
     res.json(data)
   } catch (err) {
     next(err)
@@ -48,7 +49,7 @@ export const getTransactionById = async (req, res, next) => {
 export const createTransaction = async (req, res, next) => {
   try {
     const data = await transactionService.create(req.body)
-    res.json(data)
+    res.status(201).json(data)
   } catch (err) {
     next(err)
   }
@@ -57,7 +58,7 @@ export const createTransaction = async (req, res, next) => {
 export const createQuotation = async (req, res, next) => {
   try {
     const data = await transactionService.createSalesQuotation(req.body)
-    res.json(data)
+    res.status(201).json(data)
   } catch (err) {
     next(err)
   }
@@ -66,7 +67,7 @@ export const createQuotation = async (req, res, next) => {
 export const createSalesInvoice = async (req, res, next) => {
   try {
     const data = await transactionService.createSalesInvoice(req.body)
-    res.json(data)
+    res.status(201).json(data)
   } catch (err) {
     next(err)
   }
@@ -75,7 +76,7 @@ export const createSalesInvoice = async (req, res, next) => {
 export const createPurchaseInvoice = async (req, res, next) => {
   try {
     const data = await transactionService.createPurchaseInvoice(req.body)
-    res.json(data)
+    res.status(201).json(data)
   } catch (err) {
     next(err)
   }
@@ -85,7 +86,7 @@ export const convertQuotationToInvoice = async (req, res, next) => {
   try {
     const quotationId = Number(req.params.id)
     const data = await transactionService.convertQuotationToInvoice(quotationId)
-    res.json(data)
+    res.status(201).json(data)
   } catch (err) {
     next(err)
   }

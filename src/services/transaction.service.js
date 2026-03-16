@@ -24,63 +24,53 @@ const getStatusId = async (name) => {
     return row.id
 }
 
+const fullInclude = {
+    party: { include: { partyType: true } },
+    transactionType: true,
+    status: true,
+    items: { include: { item: { include: { unit: true } } } },
+    payments: { include: { paymentMethod: true } }
+}
+
 export const transactionService = {
 
     ...base,
 
+    findAll: () =>
+        prisma.transaction.findMany({
+            include: fullInclude,
+            orderBy: { createdAt: "desc" }
+        }),
+
+    findById: (id) =>
+        prisma.transaction.findUnique({
+            where: { id },
+            include: fullInclude
+        }),
+
     getSalesQuotations: () =>
         prisma.transaction.findMany({
-            where: {
-                transactionType: { name: "SALE_QUOTATION" }
-            },
-            include: {
-                party: true,
-                transactionType: true,
-                status: true,
-                items: { include: { item: true } },
-                payments: true
-            },
+            where: { transactionType: { name: "SALE_QUOTATION" } },
+            include: fullInclude,
             orderBy: { createdAt: "desc" }
         }),
 
     getSalesInvoices: () =>
         prisma.transaction.findMany({
-            where: {
-                transactionType: {
-                    name: "SALE_INVOICE"
-                }
-            },
-            include: {
-                party: true,
-                transactionType: true,
-                status: true,
-                items: { include: { item: true } },
-                payments: true
-            },
+            where: { transactionType: { name: "SALE_INVOICE" } },
+            include: fullInclude,
             orderBy: { createdAt: "desc" }
         }),
 
     getPurchaseInvoices: () =>
         prisma.transaction.findMany({
-            where: {
-                transactionType: {
-                    name: "PURCHASE_INVOICE"
-                }
-            },
-            include: {
-                party: true,
-                transactionType: true,
-                status: true,
-                items: { include: { item: true } },
-                payments: true
-            },
+            where: { transactionType: { name: "PURCHASE_INVOICE" } },
+            include: fullInclude,
             orderBy: { createdAt: "desc" }
         }),
 
     createTransactionWithItems: async ({ transaction, items }) => {
-
         return prisma.$transaction(async (tx) => {
-
             const newTransaction = await tx.transaction.create({
                 data: transaction
             })
@@ -97,7 +87,10 @@ export const transactionService = {
                 data: preparedItems
             })
 
-            return newTransaction
+            return tx.transaction.findUnique({
+                where: { id: newTransaction.id },
+                include: fullInclude
+            })
         })
     },
 
@@ -189,7 +182,10 @@ export const transactionService = {
                 })
             }
 
-            return newInvoice
+            return tx.transaction.findUnique({
+                where: { id: newInvoice.id },
+                include: fullInclude
+            })
         })
     }
 }

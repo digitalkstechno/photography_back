@@ -1,35 +1,36 @@
-import prisma from "../config/prisma.js";
-import { createBaseService } from "../core/base.service.js";
+import prisma from "../config/prisma.js"
+import { createBaseService } from "../core/base.service.js"
 
-const base = createBaseService(prisma.item);
+const base = createBaseService(prisma.item)
 
 export const itemService = {
-    ...base,
+  ...base,
 
-    getItemsByCategory: async (categoryId, pagination = {}) => {
-        const { skip = 0, take = 20 } = pagination;
+  findAll: () =>
+    prisma.item.findMany({
+      include: { unit: true, category: true },
+      orderBy: { createdAt: "desc" }
+    }),
 
-        return prisma.item.findMany({
-            where: {
-                categoryId: Number(categoryId)
-            },
-            skip,
-            take
-        });
-    },
+  findById: (id) =>
+    prisma.item.findUnique({
+      where: { id },
+      include: { unit: true, category: true }
+    }),
 
-    searchItems: async (keyword, pagination = {}) => {
-        const { skip = 0, take = 20 } = pagination;
+  getItemsByCategory: (categoryId) =>
+    prisma.item.findMany({
+      where: { categoryId: Number(categoryId) },
+      include: { unit: true, category: true },
+      orderBy: { name: "asc" }
+    }),
 
-        return prisma.item.findMany({
-            where: {
-                name: {
-                    contains: keyword,
-                    mode: "insensitive"
-                }
-            },
-            skip,
-            take
-        });
-    }
-};
+  searchItems: (keyword) =>
+    prisma.item.findMany({
+      where: {
+        name: { contains: keyword, mode: "insensitive" }
+      },
+      include: { unit: true, category: true },
+      orderBy: { name: "asc" }
+    })
+}

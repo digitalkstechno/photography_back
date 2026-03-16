@@ -5,7 +5,9 @@ import {
   getItemById,
   createItem,
   updateItem,
-  deleteItem
+  deleteItem,
+  searchItems,
+  getItemsByCategory
 } from "../controller/item.controller.js"
 
 import { authMiddleware } from "../middlewares/auth.middleware.js"
@@ -16,6 +18,8 @@ const router = Router()
 router.use(authMiddleware)
 
 router.get("/", getItems)
+router.get("/search", searchItems)
+router.get("/category/:categoryId", getItemsByCategory)
 router.get("/:id", getItemById)
 router.post("/", createItem)
 router.put("/:id", updateItem)
