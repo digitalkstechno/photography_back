@@ -1,4 +1,5 @@
 import prisma from "../src/config/prisma.js"
+import bcrypt from "bcryptjs"
 
 async function main() {
   // ── Party Types ──
@@ -108,6 +109,104 @@ async function main() {
     if (!existing) {
       await prisma.item.create({ data: item })
     }
+  }
+
+
+  // ── Admin User ──
+  const adminHashedPassword = await bcrypt.hash("admin123", 10)
+  await prisma.user.upsert({
+    where: { email: "admin@gmail.com" },
+    update: {},
+    create: {
+      name: "Admin User",
+      email: "admin@gmail.com",
+      password: adminHashedPassword,
+      role: "admin"
+    }
+  })
+
+  // ── Sample Parties (Customer & Vendor) ──
+  const customerType = await prisma.partyType.findUnique({ where: { name: "Customer" } })
+  const vendorType = await prisma.partyType.findUnique({ where: { name: "Vendor" } })
+
+  let sampleCustomer = await prisma.party.findFirst({ where: { name: "John Doe (Customer)" } })
+  if (!sampleCustomer) {
+    sampleCustomer = await prisma.party.create({
+      data: {
+        name: "John Doe (Customer)",
+        phone: "9876543210",
+        address: "123 Main St, City",
+        partyTypeId: customerType.id
+      }
+    })
+  }
+
+  let sampleVendor = await prisma.party.findFirst({ where: { name: "Tech Store (Vendor)" } })
+  if (!sampleVendor) {
+    sampleVendor = await prisma.party.create({
+      data: {
+        name: "Tech Store (Vendor)",
+        phone: "9988776655",
+        address: "456 Market St, City",
+        partyTypeId: vendorType.id
+      }
+    })
+  }
+
+  // ── Sample Transactions ──
+  const saleQuotationType = await prisma.transactionType.findUnique({ where: { name: "SALE_QUOTATION" } })
+  const saleInvoiceType = await prisma.transactionType.findUnique({ where: { name: "SALE_INVOICE" } })
+  
+  const unpaidStatus = await prisma.transactionStatus.findUnique({ where: { name: "UNPAID" } })
+  const paidStatus = await prisma.transactionStatus.findUnique({ where: { name: "PAID" } })
+
+  const cashMethod = await prisma.paymentMethod.findUnique({ where: { name: "Cash" } })
+
+  const weddingShoot = await prisma.item.findFirst({ where: { name: "Wedding Shoot" } })
+  const droneShoot = await prisma.item.findFirst({ where: { name: "Drone Shoot" } })
+
+  const existingQuotation = await prisma.transaction.findFirst({
+    where: { partyId: sampleCustomer.id, transactionTypeId: saleQuotationType.id }
+  })
+  if (!existingQuotation) {
+    const qTotal = weddingShoot.price + droneShoot.price
+    const q = await prisma.transaction.create({
+      data: {
+        partyId: sampleCustomer.id,
+        transactionTypeId: saleQuotationType.id,
+        statusId: unpaidStatus.id,
+        total: qTotal,
+        notes: "Sample Quotation",
+        items: {
+          create: [
+            { itemId: weddingShoot.id, quantity: 1, price: weddingShoot.price, total: weddingShoot.price },
+            { itemId: droneShoot.id, quantity: 1, price: droneShoot.price, total: droneShoot.price }
+          ]
+        }
+      }
+    })
+
+    const iTotal = weddingShoot.price
+    await prisma.transaction.create({
+      data: {
+        partyId: sampleCustomer.id,
+        transactionTypeId: saleInvoiceType.id,
+        statusId: paidStatus.id,
+        total: iTotal,
+        notes: "Sample Paid Invoice",
+        referenceId: q.id,
+        items: {
+          create: [
+            { itemId: weddingShoot.id, quantity: 1, price: weddingShoot.price, total: weddingShoot.price }
+          ]
+        },
+        payments: {
+          create: [
+            { paymentMethodId: cashMethod.id, amount: iTotal, reference: "CASH001" }
+          ]
+        }
+      }
+    })
   }
 
   console.log("Seed completed successfully!")

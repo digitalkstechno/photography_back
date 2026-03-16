@@ -40,12 +40,24 @@ export const getItemsByCategory = async (req, res, next) => {
 
 export const createItem = async (req, res, next) => {
   try {
-    const data = await itemService.create(req.body)
-    res.status(201).json(data)
+
+    const payload = req.body;
+
+    // type conversions
+    if (payload.price !== undefined) payload.price = Number(payload.price);
+    if (payload.unitId !== undefined) payload.unitId = Number(payload.unitId);
+    if (payload.categoryId !== undefined)
+      payload.categoryId = payload.categoryId ? Number(payload.categoryId) : null;
+
+    const data = await itemService.create(payload);
+
+    res.status(201).json(data);
+
   } catch (err) {
-    next(err)
+    next(err);
   }
-}
+};
+
 
 export const updateItem = async (req, res, next) => {
   try {
