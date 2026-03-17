@@ -7,7 +7,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "$env:NODE_TLS_REJECT_UNAUTHORIZED=0; node server.js",
+    "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 node server.js",
     "build": "npx prisma generate",
     "postinstall": "npx prisma generate",
     "prisma:generate": "prisma generate",
