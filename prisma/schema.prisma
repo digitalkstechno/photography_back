@@ -11,7 +11,33 @@ datasource db {
   provider = "postgresql"
 }
 
+model Company {
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique // used in URLs (e.g. shadikaladdu)
+  apiKey    String   @unique // for API access
 
+  email     String?
+  phone     String?
+  address   String?
+
+  gstNumber String?
+  logoUrl   String?
+
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users        User[]
+  parties      Party[]
+  transactions Transaction[]
+  bookings     Booking[]
+  ledger       LedgerEntry[]
+
+  @@index([slug])
+}
 
 model PartyType {
   id   Int    @id @default(autoincrement())
@@ -37,6 +63,7 @@ model Party {
   tags PartyTag[]
 
   @@index([partyTypeId])
+  companies Company[]
 }
 
 model LedgerEntry {
@@ -58,6 +85,7 @@ model LedgerEntry {
   @@index([partyId])
   @@index([date])
   @@index([transactionId])
+  companies Company[]
 }
 
 model Tag {
@@ -144,31 +172,33 @@ model PackageItem {
 }
 
 model User {
-  id             Int             @id @default(autoincrement())
+  id             Int            @id @default(autoincrement())
   name           String
-  email          String          @unique
+  email          String         @unique
   password       String
-  role           String          @default("admin") // admin, manager, staff, freelancer
+  role           String         @default("admin") // admin, manager, staff, freelancer
   phone          String?
   skillset       String?
   equipment      String?
   charges        Float?
-  isFreelance    Boolean         @default(false)
-  createdAt      DateTime        @default(now())
+  isFreelance    Boolean        @default(false)
+  createdAt      DateTime       @default(now())
   assignedEvents BookingEvent[]
   availabilities Availability[]
-  equipmentItems Equipment[]     @relation("UserEquipment")
+  equipmentItems Equipment[]    @relation("UserEquipment")
+
+  companies Company[]
 }
 
 model Equipment {
-  id          Int      @id @default(autoincrement())
-  name        String
-  type        String // Camera, Drone, Light, etc.
-  serialNo    String?
-  dailyRate   Float?
-  ownerId     Int?
-  status      String   @default("AVAILABLE") // AVAILABLE, RENTED, MAINTENANCE
-  createdAt   DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  name      String
+  type      String // Camera, Drone, Light, etc.
+  serialNo  String?
+  dailyRate Float?
+  ownerId   Int?
+  status    String   @default("AVAILABLE") // AVAILABLE, RENTED, MAINTENANCE
+  createdAt DateTime @default(now())
 
   owner User? @relation("UserEquipment", fields: [ownerId], references: [id])
 
@@ -228,6 +258,7 @@ model Transaction {
   @@index([transactionTypeId])
   @@index([statusId])
   @@index([packageId])
+  companies Company[]
 }
 
 model TransactionItem {
@@ -278,14 +309,15 @@ model Booking {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  customer  Party        @relation(fields: [customerId], references: [id])
-  quotation Transaction? @relation(fields: [quotationId], references: [id])
-  package   Package?     @relation(fields: [packageId], references: [id])
+  customer  Party          @relation(fields: [customerId], references: [id])
+  quotation Transaction?   @relation(fields: [quotationId], references: [id])
+  package   Package?       @relation(fields: [packageId], references: [id])
   events    BookingEvent[]
 
   @@index([customerId])
   @@index([studioId])
   @@index([packageId])
+  companies Company[]
 }
 
 model BookingEvent {
@@ -306,4 +338,3 @@ model BookingEvent {
   @@index([eventDate])
   @@index([studioId])
 }
-
