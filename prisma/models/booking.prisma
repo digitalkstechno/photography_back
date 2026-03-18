@@ -1,0 +1,50 @@
+model Booking {
+  id          Int      @id @default(autoincrement())
+
+  companyId   Int
+  partyId     Int
+  quotationId Int?
+  packageId   Int?
+
+  status      BookingStatus @default(TENTATIVE)
+  notes       String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  company   Company     @relation(fields: [companyId], references: [id])
+  party     Party       @relation(fields: [partyId], references: [id])
+  quotation Transaction? @relation(fields: [quotationId], references: [id])
+  package   Package?     @relation(fields: [packageId], references: [id])
+
+  events BookingEvent[]
+
+  @@index([partyId])
+  @@index([companyId])
+}
+enum BookingStatus {
+  TENTATIVE
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model BookingEvent {
+  id             Int      @id @default(autoincrement())
+
+  bookingId      Int
+  eventType      String
+  eventDate      DateTime
+  eventEndDate   DateTime?
+
+  location       String?
+  photographerId Int?
+  notes          String?
+
+  booking      Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  photographer User?   @relation(fields: [photographerId], references: [id])
+
+  @@index([bookingId])
+  @@index([eventDate])
+}

@@ -1,0 +1,17 @@
+model JournalEntry {
+  id          Int      @id @default(autoincrement())
+  companyId   Int
+  date        DateTime
+  description String?
+
+  createdAt   DateTime @default(now())
+
+  // ✅ single relation (named)
+  entries LedgerEntry[] @relation("JournalToLedger")
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+  @@index([date])
+  ledgerEntries LedgerEntry[]
+}

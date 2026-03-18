@@ -1,0 +1,24 @@
+enum AccountType {
+  ASSET
+  LIABILITY
+  INCOME
+  EXPENSE
+}
+
+model Account {
+  id        Int         @id @default(autoincrement())
+  name      String
+  type      AccountType
+  companyId Int
+
+  partyId   Int?
+  party     Party?      @relation(fields: [partyId], references: [id])
+
+  company   Company     @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime    @default(now())
+
+  entries   LedgerEntry[]
+
+  @@index([companyId])
+}

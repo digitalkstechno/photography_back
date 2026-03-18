@@ -1,0 +1,21 @@
+model PaymentMethod {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  payments      Payment[]
+  ledgerEntries LedgerEntry[]
+}
+
+model Payment {
+  id              Int      @id @default(autoincrement())
+  transactionId   Int
+  paymentMethodId Int
+  amount          Decimal @db.Decimal(10, 2)
+  reference       String?
+  createdAt       DateTime @default(now())
+
+  transaction   Transaction   @relation(fields: [transactionId], references: [id])
+  paymentMethod PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+
+  @@index([transactionId])
+}

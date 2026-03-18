@@ -1,0 +1,28 @@
+model Package {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  price       Decimal @db.Decimal(10, 2)
+  days        Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items        PackageItem[]
+  bookings     Booking[]
+  transactions Transaction[]
+
+  @@index([name])
+}
+
+model PackageItem {
+  id        Int @id @default(autoincrement())
+  packageId Int
+  itemId    Int
+  quantity  Int @default(1)
+
+  package Package @relation(fields: [packageId], references: [id])
+  item    Item    @relation(fields: [itemId], references: [id])
+
+  @@index([packageId])
+  @@index([itemId])
+}

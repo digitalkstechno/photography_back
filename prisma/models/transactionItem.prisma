@@ -1,0 +1,14 @@
+model TransactionItem {
+  id            Int    @id @default(autoincrement())
+  transactionId Int
+  itemId        Int
+  quantity      Int
+  price         Decimal @db.Decimal(10, 2)
+  total         Decimal @db.Decimal(10, 2)
+
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+  item        Item        @relation(fields: [itemId], references: [id])
+
+  @@index([transactionId])
+  @@index([itemId])
+}

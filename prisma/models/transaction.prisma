@@ -1,0 +1,44 @@
+enum TransactionType {
+  QUOTATION
+  INVOICE
+  EXPENSE
+  PAYMENT
+}
+
+enum TransactionStatus {
+  DRAFT
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model Transaction {
+  id          Int      @id @default(autoincrement())
+
+  companyId   Int
+  partyId     Int
+
+  type        TransactionType
+  status      TransactionStatus
+
+  referenceId Int?
+  packageId   Int?
+
+  total       Decimal  @db.Decimal(10, 2)
+  notes       String?
+
+  createdAt   DateTime @default(now())
+
+  // Relations
+  company Company @relation(fields: [companyId], references: [id])
+  party   Party   @relation(fields: [partyId], references: [id])
+  package Package? @relation(fields: [packageId], references: [id])
+
+  items    TransactionItem[]
+  payments Payment[]
+  bookings Booking[]
+
+  @@index([partyId])
+  @@index([companyId])
+}
+
