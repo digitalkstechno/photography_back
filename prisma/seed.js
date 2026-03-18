@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs"
 
 async function main() {
   // ── Party Types ──
+console.log(Object.keys(prisma))
   await prisma.partyType.upsert({
     where: { name: "Customer" },
     update: {},

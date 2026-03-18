@@ -19,7 +19,7 @@ export const authService = {
 
   login: async (email, password) => {
 
-    const user = await prisma.user.findUnique({
+    const user = await  prisma.User.findUnique({
       where: { email }
     })
 
@@ -37,7 +37,7 @@ export const authService = {
 
     return { user, token }
   },
-
+  
   findAll: async () => {
     return prisma.user.findMany({
       select: { id: true, name: true, email: true, role: true }

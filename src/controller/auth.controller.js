@@ -30,7 +30,7 @@ export const login = async (req, res, next) => {
   try {
 
     const { email, password } = req.body
-
+    console.log(email,password);
     const result = await authService.login(email, password)
 
     res.json(result)
