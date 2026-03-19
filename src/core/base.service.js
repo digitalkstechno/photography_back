@@ -1,30 +1,23 @@
 export const createBaseService = (model) => {
 
   const create = async (data) => {
-    return model.create({ data })
+    return model.create(data)
   }
 
-  const findAll = async (where = {}) => {
-    return model.findMany({ where })
+  const findAll = async (filter = {}) => {
+    return model.find(filter).lean()
   }
 
   const findById = async (id) => {
-    return model.findUnique({
-      where: { id }
-    })
+    return model.findById(id).lean()
   }
 
   const update = async (id, data) => {
-    return model.update({
-      where: { id },
-      data
-    })
+    return model.findByIdAndUpdate(id, data, { new: true, runValidators: true }).lean()
   }
 
   const remove = async (id) => {
-    return model.delete({
-      where: { id }
-    })
+    return model.findByIdAndDelete(id).lean()
   }
 
   return {

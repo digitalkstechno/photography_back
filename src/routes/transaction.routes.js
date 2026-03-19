@@ -13,7 +13,7 @@ import {
   getSalesQuotations,
   getSalesInvoices,
   getPurchaseInvoices
-} from "../controller/transaction.controller.js"
+} from "../controllers/transaction.controller.js"
 
 import { authMiddleware } from "../middlewares/auth.middleware.js"
 

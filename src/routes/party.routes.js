@@ -1,22 +1,12 @@
 import { Router } from "express"
-
 import {
-  getParties,
-  getPartyById,
-  createParty,
-  updateParty,
-  deleteParty,
-  getCustomers,
-  getVendors,
-  getPartyLedger,
-  searchParties
-} from "../controller/party.controller.js"
-
+  getParties, getPartyById, createParty, updateParty, deleteParty,
+  getCustomers, getVendors, getPartyLedger, searchParties
+} from "../controllers/party.controller.js"
 import { authMiddleware } from "../middlewares/auth.middleware.js"
 
 const router = Router()
 
-// protect all routes
 router.use(authMiddleware)
 
 router.get("/", getParties)

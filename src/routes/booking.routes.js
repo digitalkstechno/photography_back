@@ -1,5 +1,5 @@
 import { Router } from "express"
-import * as bookingController from "../controller/booking.controller.js"
+import * as bookingController from "../controllers/booking.controller.js"
 import { authMiddleware } from "../middlewares/auth.middleware.js"
 
 const router = Router()

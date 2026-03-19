@@ -5,7 +5,7 @@ import {
   createAvailability,
   updateAvailability,
   deleteAvailability
-} from "../controller/availability.controller.js";
+} from "../controllers/availability.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = Router();

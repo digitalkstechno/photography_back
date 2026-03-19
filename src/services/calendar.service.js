@@ -1,42 +1,68 @@
-import prisma from "../config/prisma.js";
+import Event from "../schemas/event.schema.js"
 
 export const calendarService = {
-  getEvents: async (startDate, endDate) => {
-    // 1. Fetch Booking Events
-    const bookingEvents = await prisma.bookingEvent.findMany({
-      where: {
-        eventDate: {
-          gte: new Date(startDate),
-          lte: new Date(endDate)
-        }
-      },
-      include: {
-        booking: {
-          include: { customer: true }
-        },
-        photographer: { select: { id: true, name: true } }
-      },
-      orderBy: { eventDate: 'asc' }
-    });
 
-    // 2. Fetch Availabilities (Blocked/Holidays)
-    const availabilities = await prisma.availability.findMany({
-      where: {
-        date: {
-          gte: new Date(startDate),
-          lte: new Date(endDate)
-        },
-        isBlocked: true
-      },
-      include: {
-        user: { select: { id: true, name: true } }
+  getEventsByRange: async (startDate, endDate) => {
+    return Event.find({
+      status: { $ne: "CANCELLED" },
+      $or: [
+        { startDate: { $gte: new Date(startDate), $lte: new Date(endDate) } },
+        { endDate: { $gte: new Date(startDate), $lte: new Date(endDate) } },
+        { startDate: { $lte: new Date(startDate) }, endDate: { $gte: new Date(endDate) } }
+      ]
+    })
+      .populate("customer", "name phone")
+      .populate("package", "name")
+      .sort({ startDate: 1 })
+      .lean()
+  },
+
+  getBookedDates: async (startDate, endDate) => {
+    const events = await Event.find({
+      status: { $ne: "CANCELLED" },
+      startDate: { $lte: new Date(endDate) },
+      endDate: { $gte: new Date(startDate) }
+    }).lean()
+
+    const bookedDates = new Set()
+
+    events.forEach(event => {
+      const current = new Date(Math.max(event.startDate, new Date(startDate)))
+      const end = new Date(Math.min(event.endDate, new Date(endDate)))
+
+      while (current <= end) {
+        bookedDates.add(current.toISOString().split("T")[0])
+        current.setDate(current.getDate() + 1)
       }
-    });
+    })
 
-    // 3. Combine and return
+    // Build full date range and mark availability
+    const allDates = []
+    const cursor = new Date(startDate)
+    const rangeEnd = new Date(endDate)
+
+    while (cursor <= rangeEnd) {
+      const dateStr = cursor.toISOString().split("T")[0]
+      allDates.push({
+        date: dateStr,
+        booked: bookedDates.has(dateStr)
+      })
+      cursor.setDate(cursor.getDate() + 1)
+    }
+
+    return allDates
+  },
+
+  checkAvailability: async (startDate, endDate) => {
+    const conflicts = await Event.find({
+      status: { $ne: "CANCELLED" },
+      startDate: { $lte: new Date(endDate) },
+      endDate: { $gte: new Date(startDate) }
+    }).populate("customer", "name").lean()
+
     return {
-      bookingEvents,
-      availabilities
-    };
+      available: conflicts.length === 0,
+      conflicts
+    }
   }
-};
+}

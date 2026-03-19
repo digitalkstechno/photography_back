@@ -8,7 +8,7 @@ import {
   deleteItem,
   searchItems,
   getItemsByCategory
-} from "../controller/item.controller.js"
+} from "../controllers/item.controller.js"
 
 import { authMiddleware } from "../middlewares/auth.middleware.js"
 

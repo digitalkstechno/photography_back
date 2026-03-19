@@ -5,7 +5,7 @@ import {
   createEquipment,
   updateEquipment,
   deleteEquipment
-} from "../controller/equipment.controller.js";
+} from "../controllers/equipment.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = Router();

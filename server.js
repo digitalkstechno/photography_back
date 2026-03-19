@@ -2,6 +2,7 @@ import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
 
+import connectDB from "./src/config/db.js"
 import routes from "./src/routes/index.js"
 import { errorHandler } from "./src/middlewares/errorHandler.js"
 
@@ -18,7 +19,7 @@ app.use("/api", routes)
 
 // Health check
 app.get("/", (req, res) => {
-    res.json({ message: "Photography Billing API running", version: "1.0.0" })
+  res.json({ success: true, message: "Photography Business API running", version: "2.0.0" })
 })
 
 // Error handler
@@ -26,6 +27,11 @@ app.use(errorHandler)
 
 const PORT = process.env.PORT || 3000
 
-app.listen(PORT, () => {
+const start = async () => {
+  await connectDB()
+  app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`)
-})
+  })
+}
+
+start()

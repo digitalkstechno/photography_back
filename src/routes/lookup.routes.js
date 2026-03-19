@@ -9,7 +9,7 @@ import {
   getPaymentMethods,
   getTransactionTypes,
   getTransactionStatuses
-} from "../controller/lookup.controller.js"
+} from "../controllers/lookup.controller.js"
 
 const router = Router()
 

@@ -1,35 +1,33 @@
 import { Router } from "express"
 
 import authRoutes from "./auth.routes.js"
-import userRoutes from "./user.routes.js"
 import partyRoutes from "./party.routes.js"
-import itemRoutes from "./item.routes.js"
+import serviceRoutes from "./service.routes.js"
 import packageRoutes from "./package.routes.js"
-import equipmentRoutes from "./equipment.routes.js"
-import availabilityRoutes from "./availability.routes.js"
-import ledgerRoutes from "./ledger.routes.js"
-import transactionRoutes from "./transaction.routes.js"
+import quotationRoutes from "./quotation.routes.js"
+import invoiceRoutes from "./invoice.routes.js"
+import eventRoutes from "./event.routes.js"
+import jobRoutes from "./job.routes.js"
+import freelancerRoutes from "./freelancer.routes.js"
 import paymentRoutes from "./payment.routes.js"
-import lookupRoutes from "./lookup.routes.js"
-import dashboardRoutes from "./dashboard.routes.js"
-import bookingRoutes from "./booking.routes.js"
+import ledgerRoutes from "./ledger.routes.js"
 import calendarRoutes from "./calendar.routes.js"
+import dashboardRoutes from "./dashboard.routes.js"
 
 const router = Router()
 
 router.use("/auth", authRoutes)
-router.use("/users", userRoutes)
 router.use("/parties", partyRoutes)
-router.use("/items", itemRoutes)
+router.use("/services", serviceRoutes)
 router.use("/packages", packageRoutes)
-router.use("/equipment", equipmentRoutes)
-router.use("/availability", availabilityRoutes)
-router.use("/ledger", ledgerRoutes)
-router.use("/transactions", transactionRoutes)
+router.use("/quotations", quotationRoutes)
+router.use("/invoices", invoiceRoutes)
+router.use("/events", eventRoutes)
+router.use("/jobs", jobRoutes)
+router.use("/freelancers", freelancerRoutes)
 router.use("/payments", paymentRoutes)
-router.use("/lookups", lookupRoutes)
-router.use("/dashboard", dashboardRoutes)
-router.use("/bookings", bookingRoutes)
+router.use("/ledger", ledgerRoutes)
 router.use("/calendar", calendarRoutes)
+router.use("/dashboard", dashboardRoutes)
 
 export default router

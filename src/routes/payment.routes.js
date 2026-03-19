@@ -1,24 +1,20 @@
 import { Router } from "express"
-
 import {
-  getPayments,
-  getPaymentById,
-  getPaymentsByTransaction,
-  createPayment,
-  deletePayment
-} from "../controller/payment.controller.js"
-
+  getPayments, getPaymentById, getPaymentsByParty, createPayment, updatePayment, deletePayment, getPaymentSummary
+} from "../controllers/payment.controller.js"
 import { authMiddleware } from "../middlewares/auth.middleware.js"
+import { authorizeRoles } from "../middlewares/role.middleware.js"
 
 const router = Router()
 
-// protect all routes
 router.use(authMiddleware)
 
 router.get("/", getPayments)
-router.get("/transaction/:transactionId", getPaymentsByTransaction)
+router.get("/summary", getPaymentSummary)
+router.get("/party/:partyId", getPaymentsByParty)
 router.get("/:id", getPaymentById)
-router.post("/", createPayment)
-router.delete("/:id", deletePayment)
+router.post("/", authorizeRoles("ADMIN", "STAFF"), createPayment)
+router.put("/:id", authorizeRoles("ADMIN"), updatePayment)
+router.delete("/:id", authorizeRoles("ADMIN"), deletePayment)
 
 export default router
