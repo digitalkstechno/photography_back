@@ -6,7 +6,7 @@ export const getPayments = async (req, res, next) => {
     if (req.query.type) filter.type = req.query.type.toUpperCase()
     if (req.query.party) filter.party = req.query.party
     if (req.query.mode) filter.mode = req.query.mode.toUpperCase()
-    const data = await paymentService.findAll(filter)
+    const data = await paymentService.findAll({ ...filter, ...req.query })
     res.json({ success: true, data })
   } catch (err) {
     next(err)

@@ -24,7 +24,7 @@ export const login = async (req, res, next) => {
 
 export const getUsers = async (req, res, next) => {
   try {
-    const users = await authService.findAll()
+    const users = await authService.findAll(req.query)
     res.json({ success: true, data: users })
   } catch (err) {
     next(err)

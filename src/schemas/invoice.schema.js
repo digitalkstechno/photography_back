@@ -37,6 +37,11 @@ const invoiceSchema = new mongoose.Schema({
     ref: "Party",
     required: [true, "Customer is required"]
   },
+  eventId:{
+    type:mongoose.Schema.Types.ObjectId,
+    ref: "Event",
+    required: [true, "Event is required"]
+  },
   quotation: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Quotation"
@@ -74,8 +79,8 @@ const invoiceSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["DRAFT", "SENT", "PAID", "PARTIALLY_PAID", "CANCELLED"],
-    default: "DRAFT"
+    enum: ["PENDING", "PARTIAL", "PAID", "CANCELLED"],
+    default: "PENDING"
   },
   notes: {
     type: String,

@@ -1,10 +1,14 @@
+import { BaseService } from "../core/classbase.service.js"
 import User from "../schemas/user.schema.js"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 
-export const authService = {
+class AuthService extends BaseService {
+  constructor() {
+    super(User)
+  }
 
-  register: async (data) => {
+  async register(data) {
     const existing = await User.findOne({ email: data.email })
     if (existing) {
       throw Object.assign(new Error("Email already registered"), { status: 409 })
@@ -21,9 +25,9 @@ export const authService = {
     })
 
     return { id: user._id, name: user.name, email: user.email, role: user.role }
-  },
+  }
 
-  login: async (email, password) => {
+  async login(email, password) {
     const user = await User.findOne({ email })
     if (!user) throw Object.assign(new Error("User not found"), { status: 404 })
 
@@ -40,24 +44,30 @@ export const authService = {
       user: { id: user._id, name: user.name, email: user.email, role: user.role },
       token
     }
-  },
+  }
 
-  findAll: async () => {
-    return User.find().select("-password").lean()
-  },
+  async findAll(filter = {}) {
+    return super.findAll(filter)
+  }
 
-  findById: async (id) => {
-    return User.findById(id).select("-password").lean()
-  },
+  async findById(id) {
+    return super.findById(id)
+  }
 
-  update: async (id, data) => {
+  async beforeUpdate(data) {
     if (data.password) {
       data.password = await bcrypt.hash(data.password, 10)
     }
-    return User.findByIdAndUpdate(id, data, { new: true, runValidators: true }).select("-password").lean()
-  },
+    return data
+  }
 
-  remove: async (id) => {
-    return User.findByIdAndDelete(id).lean()
+  async update(id, data) {
+    return super.update(id, data)
+  }
+
+  async remove(id) {
+    return super.remove(id)
   }
 }
+
+export const authService = new AuthService()

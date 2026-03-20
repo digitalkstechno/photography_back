@@ -1,3 +1,4 @@
+import { BaseService } from "../core/classbase.service.js"
 import Quotation from "../schemas/quotation.schema.js"
 import Service from "../schemas/service.schema.js"
 
@@ -20,27 +21,34 @@ function assertTransition(current, next) {
   }
 }
 
-export const quotationService = {
+class QuotationService extends BaseService {
+  constructor() {
+    super(Quotation)
+  }
 
-  findAll: async () => {
-    return Quotation.find()
-      .populate("customer", "name phone email")
-      .populate("items.service", "name type")
-      .sort({ createdAt: -1 })
-      .lean()
-  },
+  async findAll(filter = {}) {
+    return super.findAll(filter, {
+      populate: [
+        { path: "customer", select: "name phone email" },
+        { path: "items.service", select: "name type" }
+      ],
+      sort: { createdAt: -1 }
+    })
+  }
 
-  findById: async (id) => {
-    return Quotation.findById(id)
-      .populate("customer", "name phone email address")
-      .populate("items.service", "name type pricePerDay")
-      .populate("convertedToEvent")
-      .lean()
-  },
+  async findById(id) {
+    return super.findById(id, {
+      populate: [
+        { path: "customer", select: "name phone email address" },
+        { path: "items.service", select: "name type pricePerDay" },
+        { path: "convertedToEvent" }
+      ]
+    })
+  }
 
-  create: async (data) => {
+  async buildItems(rawItems = []) {
     const items = []
-    for (const item of data.items || []) {
+    for (const item of rawItems) {
       const service = await Service.findById(item.service).lean()
       if (!service) throw Object.assign(new Error(`Service ${item.service} not found`), { status: 404 })
 
@@ -53,22 +61,18 @@ export const quotationService = {
         total: pricePerDay * days
       })
     }
+    return items
+  }
 
-    const quotation = new Quotation({
-      customer: data.customer,
-      items,
-      discount: data.discount || 0,
-      notes: data.notes,
-      validUntil: data.validUntil,
-      status: "DRAFT"
-    })
+  async beforeCreate(data) {
+    data.items = await this.buildItems(data.items)
+    data.status = "DRAFT"
+    data.discount = data.discount || 0
+    return data
+  }
 
-    await quotation.save()
-    return quotation.toObject()
-  },
-
-  update: async (id, data) => {
-    const quotation = await Quotation.findById(id)
+  async update(id, data) {
+    const quotation = await this.findById(id)
     if (!quotation) throw Object.assign(new Error("Quotation not found"), { status: 404 })
 
     if (quotation.status === "CONVERTED") {
@@ -77,47 +81,26 @@ export const quotationService = {
 
     if (data.status && data.status !== quotation.status) {
       assertTransition(quotation.status, data.status)
-      quotation.status = data.status
     }
 
     if (data.items) {
-      const items = []
-      for (const item of data.items) {
-        const service = await Service.findById(item.service).lean()
-        if (!service) throw Object.assign(new Error(`Service ${item.service} not found`), { status: 404 })
-
-        const pricePerDay = item.pricePerDay || service.pricePerDay
-        const days = item.days || 1
-        items.push({
-          service: service._id,
-          days,
-          pricePerDay,
-          total: pricePerDay * days
-        })
-      }
-      quotation.items = items
+      data.items = await this.buildItems(data.items)
     }
 
-    if (data.discount !== undefined) quotation.discount = data.discount
-    if (data.notes !== undefined) quotation.notes = data.notes
-    if (data.validUntil !== undefined) quotation.validUntil = data.validUntil
+    return super.update(id, data)
+  }
 
-    await quotation.save()
-    return quotation.toObject()
-  },
-
-  remove: async (id) => {
-    const quotation = await Quotation.findById(id)
+  async remove(id) {
+    const quotation = await this.findById(id)
     if (!quotation) throw Object.assign(new Error("Quotation not found"), { status: 404 })
     if (quotation.status === "CONVERTED") {
       throw Object.assign(new Error("Cannot delete a converted quotation"), { status: 400 })
     }
-    await quotation.deleteOne()
-    return quotation.toObject()
-  },
+    return super.remove(id)
+  }
 
-  sendToCustomer: async (id) => {
-    const quotation = await Quotation.findById(id)
+  async sendToCustomer(id) {
+    const quotation = await this.model.findById(id)
     if (!quotation) throw Object.assign(new Error("Quotation not found"), { status: 404 })
     assertTransition(quotation.status, "SENT")
     quotation.status = "SENT"
@@ -125,3 +108,5 @@ export const quotationService = {
     return quotation.toObject()
   }
 }
+
+export const quotationService = new QuotationService()

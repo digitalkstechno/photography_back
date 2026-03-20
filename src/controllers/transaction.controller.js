@@ -2,7 +2,7 @@ import { transactionService } from "../services/transaction.service.js"
 
 export const getTransactions = async (req, res, next) => {
   try {
-    const data = await transactionService.findAll()
+    const data = await transactionService.findAll(req.query)
     res.json(data)
   } catch (err) {
     next(err)

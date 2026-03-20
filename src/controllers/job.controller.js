@@ -2,7 +2,7 @@ import { jobService } from "../services/job.service.js"
 
 export const getJobs = async (req, res, next) => {
   try {
-    const data = await jobService.findAll()
+    const data = await jobService.findAll(req.query)
     res.json({ success: true, data })
   } catch (err) {
     next(err)

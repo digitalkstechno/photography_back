@@ -1,8 +1,8 @@
 import Event from "../schemas/event.schema.js"
 
-export const calendarService = {
+class CalendarService {
 
-  getEventsByRange: async (startDate, endDate) => {
+  async getEventsByRange(startDate, endDate) {
     return Event.find({
       status: { $ne: "CANCELLED" },
       $or: [
@@ -15,9 +15,9 @@ export const calendarService = {
       .populate("package", "name")
       .sort({ startDate: 1 })
       .lean()
-  },
+  }
 
-  getBookedDates: async (startDate, endDate) => {
+  async getBookedDates(startDate, endDate) {
     const events = await Event.find({
       status: { $ne: "CANCELLED" },
       startDate: { $lte: new Date(endDate) },
@@ -51,9 +51,9 @@ export const calendarService = {
     }
 
     return allDates
-  },
+  }
 
-  checkAvailability: async (startDate, endDate) => {
+  async checkAvailability(startDate, endDate) {
     const conflicts = await Event.find({
       status: { $ne: "CANCELLED" },
       startDate: { $lte: new Date(endDate) },
@@ -66,3 +66,5 @@ export const calendarService = {
     }
   }
 }
+
+export const calendarService = new CalendarService()

@@ -1,9 +1,9 @@
 import Payment from "../schemas/payment.schema.js"
 import Party from "../schemas/party.schema.js"
 
-export const ledgerService = {
+class LedgerService {
 
-  getPartyLedger: async (partyId) => {
+  async getPartyLedger(partyId) {
     const party = await Party.findById(partyId).lean()
     if (!party) throw Object.assign(new Error("Party not found"), { status: 404 })
 
@@ -34,9 +34,9 @@ export const ledgerService = {
       balance: totalCredit - totalDebit,
       entries
     }
-  },
+  }
 
-  getAllBalances: async () => {
+  async getAllBalances() {
     const balances = await Payment.aggregate([
       {
         $group: {
@@ -80,3 +80,5 @@ export const ledgerService = {
     return balances
   }
 }
+
+export const ledgerService = new LedgerService()

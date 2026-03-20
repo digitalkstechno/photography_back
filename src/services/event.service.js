@@ -1,116 +1,162 @@
-import Event from "../schemas/event.schema.js"
-import Invoice from "../schemas/invoice.schema.js"
+import { BaseService } from "../core/classbase.service.js";
+import Event from "../schemas/event.schema.js";
+import { invoiceService } from "./invoice.service.js";
 
-export const eventService = {
+class EventService extends BaseService {
+  constructor() {
+    super(Event);
+  }
 
-  findAll: async (filter = {}) => {
-    return Event.find(filter)
-      .populate("customer", "name phone email")
-      .populate("quotation", "totalAmount finalAmount status")
-      .populate("invoice", "invoiceNumber grandTotal status paidAmount")
-      .populate("package", "name price")
-      .sort({ startDate: -1 })
-      .lean()
-  },
+  // -----------------------------------
+  // DEFAULT POPULATE CONFIG
+  // -----------------------------------
+  getDefaultPopulate() {
+    return [
+      { path: "customer", select: "name phone email" },
+      { path: "quotation", select: "totalAmount finalAmount status" },
+      { path: "invoice", select: "invoiceNumber grandTotal status paidAmount" },
+      { path: "package", select: "name price" },
+      { path: "assignments.user", select: "name email phone role" },
+      { path: "assignments.freelancer", select: "name skill chargePerDay phone" },
+      { path: "assignments.equipments", select: "name category serialNumber" },
+    ];
+  }
 
-  findById: async (id) => {
-    return Event.findById(id)
-      .populate("customer", "name phone email address")
-      .populate("quotation")
-      .populate("invoice", "invoiceNumber grandTotal status paidAmount items")
-      .populate("package")
-      .lean()
-  },
+  // -----------------------------------
+  // FIND ALL
+  // -----------------------------------
+  async findAll(filter = {}) {
+    return super.findAll(filter, {
+      populate: this.getDefaultPopulate(),
+      sort: { startDate: -1 },
+    });
+  }
 
-  create: async (data) => {
-    // If invoice is provided, auto-populate customer and totalAmount
+  // -----------------------------------
+  // FIND BY ID
+  // -----------------------------------
+  async findById(id) {
+    return super.findById(id, {
+      populate: [
+        ...this.getDefaultPopulate(),
+        { path: "invoice", select: "invoiceNumber grandTotal status paidAmount items" },
+        { path: "assignments.equipments", select: "name category serialNumber condition" },
+      ],
+    });
+  }
+
+  // -----------------------------------
+  // BEFORE CREATE HOOK
+  // -----------------------------------
+  async beforeCreate(data) {
+    // 🔥 Inject from invoice
     if (data.invoice) {
-      const invoice = await Invoice.findById(data.invoice).lean()
+      const invoice = await invoiceService.getById(data.invoice);
+
       if (invoice) {
-        data.customer = data.customer || invoice.customer
-        data.totalAmount = data.totalAmount || invoice.grandTotal
+        data.customer = data.customer || invoice.customer;
+        data.totalAmount = data.totalAmount || invoice.grandTotal;
       }
     }
 
-    // Check date availability
+    // 🔥 Check availability
     if (data.startDate && data.endDate) {
-      const overlapping = await Event.findOne({
-        status: { $ne: "CANCELLED" },
-        startDate: { $lte: new Date(data.endDate) },
-        endDate: { $gte: new Date(data.startDate) }
-      })
+      const conflict = await this.checkAvailabilityInternal(
+        data.startDate,
+        data.endDate
+      );
 
-      if (overlapping && !data.overrideConflicts) {
+      if (conflict && !data.overrideConflicts) {
         throw Object.assign(
-          new Error(`Date conflict with existing event "${overlapping.eventType}" (${overlapping.startDate.toISOString().split("T")[0]} – ${overlapping.endDate.toISOString().split("T")[0]})`),
+          new Error(
+            `Date conflict with "${conflict.eventType}" (${this.formatDate(
+              conflict.startDate
+            )} – ${this.formatDate(conflict.endDate)})`
+          ),
           { status: 409, conflict: true }
-        )
+        );
       }
     }
 
-    const event = await Event.create({
-      customer: data.customer,
-      quotation: data.quotation,
-      invoice: data.invoice,
-      package: data.package,
-      eventType: data.eventType,
-      title: data.title,
-      startDate: data.startDate,
-      endDate: data.endDate,
-      location: data.location,
-      status: data.status || "CONFIRMED",
-      totalAmount: data.totalAmount || 0,
-      notes: data.notes
-    })
+    return data;
+  }
 
-    return event.toObject()
-  },
-
-  update: async (id, data) => {
+  // -----------------------------------
+  // BEFORE UPDATE HOOK
+  // -----------------------------------
+  async beforeUpdate(data) {
     if (data.startDate && data.endDate) {
-      const overlapping = await Event.findOne({
-        _id: { $ne: id },
-        status: { $ne: "CANCELLED" },
-        startDate: { $lte: new Date(data.endDate) },
-        endDate: { $gte: new Date(data.startDate) }
-      })
+      const conflict = await this.checkAvailabilityInternal(
+        data.startDate,
+        data.endDate,
+        data._id
+      );
 
-      if (overlapping && !data.overrideConflicts) {
+      if (conflict && !data.overrideConflicts) {
         throw Object.assign(
-          new Error(`Date conflict with event "${overlapping.eventType}" (${overlapping.startDate.toISOString().split("T")[0]})`),
+          new Error(
+            `Date conflict with "${conflict.eventType}" (${this.formatDate(
+              conflict.startDate
+            )})`
+          ),
           { status: 409, conflict: true }
-        )
+        );
       }
     }
 
-    const { overrideConflicts, ...updateData } = data
-    const event = await Event.findByIdAndUpdate(id, updateData, { new: true, runValidators: true }).lean()
-    if (!event) throw Object.assign(new Error("Event not found"), { status: 404 })
-    return event
-  },
+    delete data.overrideConflicts;
+    return data;
+  }
 
-  updateStatus: async (id, status) => {
-    const event = await Event.findByIdAndUpdate(id, { status }, { new: true, runValidators: true }).lean()
-    if (!event) throw Object.assign(new Error("Event not found"), { status: 404 })
-    return event
-  },
+  // -----------------------------------
+  // STATUS UPDATE
+  // -----------------------------------
+  async updateStatus(id, status) {
+    return super.update(id, { status });
+  }
 
-  remove: async (id) => {
-    const event = await Event.findByIdAndDelete(id).lean()
-    if (!event) throw Object.assign(new Error("Event not found"), { status: 404 })
-    return event
-  },
-
-  checkAvailability: async (startDate, endDate) => {
-    const conflicts = await Event.find({
-      status: { $ne: "CANCELLED" },
-      startDate: { $lte: new Date(endDate) },
-      endDate: { $gte: new Date(startDate) }
-    }).populate("customer", "name").lean()
+  // -----------------------------------
+  // AVAILABILITY (PUBLIC)
+  // -----------------------------------
+  async checkAvailability(startDate, endDate) {
+    const conflicts = await this.model
+      .find({
+        status: { $ne: "CANCELLED" },
+        startDate: { $lte: new Date(endDate) },
+        endDate: { $gte: new Date(startDate) },
+      })
+      .populate("customer", "name")
+      .lean();
 
     return {
       available: conflicts.length === 0,
-      conflicts
+      conflicts,
+    };
+  }
+
+  // -----------------------------------
+  // INTERNAL AVAILABILITY CHECK
+  // -----------------------------------
+  async checkAvailabilityInternal(startDate, endDate, excludeId = null) {
+    const query = {
+      status: { $ne: "CANCELLED" },
+      startDate: { $lte: new Date(endDate) },
+      endDate: { $gte: new Date(startDate) },
+    };
+
+    if (excludeId) {
+      query._id = { $ne: excludeId };
     }
+
+    return this.model.findOne(query).lean();
+  }
+
+  // -----------------------------------
+  // UTIL
+  // -----------------------------------
+  formatDate(date) {
+    return new Date(date).toISOString().split("T")[0];
   }
 }
+
+export const eventService = new EventService();

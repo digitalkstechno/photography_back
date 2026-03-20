@@ -2,7 +2,7 @@ import { bookingService } from "../services/booking.service.js"
 
 export const getBookings = async (req, res, next) => {
     try {
-        const data = await bookingService.findAll()
+        const data = await bookingService.findAll(req.query)
         res.json(data)
     } catch (err) {
         next(err)

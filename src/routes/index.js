@@ -12,7 +12,9 @@ import freelancerRoutes from "./freelancer.routes.js"
 import paymentRoutes from "./payment.routes.js"
 import ledgerRoutes from "./ledger.routes.js"
 import calendarRoutes from "./calendar.routes.js"
+import equipmentRoutes from "./equipment.routes.js"
 import dashboardRoutes from "./dashboard.routes.js"
+import teamMemberRoutes from "./teamManagment.rotues.js"
 
 const router = Router()
 
@@ -24,10 +26,12 @@ router.use("/quotations", quotationRoutes)
 router.use("/invoices", invoiceRoutes)
 router.use("/events", eventRoutes)
 router.use("/jobs", jobRoutes)
+router.use('/team', teamMemberRoutes);
 router.use("/freelancers", freelancerRoutes)
 router.use("/payments", paymentRoutes)
 router.use("/ledger", ledgerRoutes)
 router.use("/calendar", calendarRoutes)
+router.use("/equipments", equipmentRoutes)
 router.use("/dashboard", dashboardRoutes)
 
 export default router

@@ -2,7 +2,7 @@ import { packageService } from "../services/package.service.js"
 
 export const getPackages = async (req, res, next) => {
   try {
-    const data = await packageService.findAll()
+    const data = await packageService.findAll(req.query)
     res.json({ success: true, data })
   } catch (err) {
     next(err)

@@ -2,7 +2,7 @@ import { quotationService } from "../services/quotation.service.js"
 
 export const getQuotations = async (req, res, next) => {
   try {
-    const data = await quotationService.findAll()
+    const data = await quotationService.findAll(req.query)
     res.json({ success: true, data })
   } catch (err) {
     next(err)

@@ -4,9 +4,9 @@ import Payment from "../schemas/payment.schema.js"
 import Party from "../schemas/party.schema.js"
 import Quotation from "../schemas/quotation.schema.js"
 
-export const dashboardService = {
+class DashboardService {
 
-  getSummary: async () => {
+  async getSummary() {
     const [
       eventCounts,
       invoiceSummary,
@@ -96,3 +96,5 @@ export const dashboardService = {
     }
   }
 }
+
+export const dashboardService = new DashboardService()

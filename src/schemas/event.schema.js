@@ -39,11 +39,6 @@ const eventSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  status: {
-    type: String,
-    enum: ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"],
-    default: "PENDING"
-  },
   notes: {
     type: String,
     trim: true
@@ -52,14 +47,31 @@ const eventSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
-  }
+  },
+  status: {
+    type: String,
+    enum: ["PLANNED", "CONFIRMED", "COMPLETED", "CANCELLED"],
+    default: "PLANNED",
+  },
 }, {
   timestamps: true
 })
 
-// Index for date-range queries and availability checks
-eventSchema.index({ startDate: 1, endDate: 1 })
-eventSchema.index({ customer: 1 })
-eventSchema.index({ status: 1 })
+// -------------------------------
+// 🔥 VALIDATION (IMPORTANT)
+// -------------------------------
+eventSchema.pre("save", function (next) {
+  if (this.startDate > this.endDate) {
+    return next(new Error("Start date cannot be after end date"));
+  }
+  next();
+});
 
+
+// -------------------------------
+// 🔥 INDEXES (PERFORMANCE)
+// -------------------------------
+eventSchema.index({ startDate: 1, endDate: 1 });
+eventSchema.index({ customer: 1 });
+eventSchema.index({ status: 1 });
 export default mongoose.model("Event", eventSchema)

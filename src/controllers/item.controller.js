@@ -2,7 +2,7 @@ import { itemService } from "../services/item.service.js"
 
 export const getItems = async (req, res, next) => {
   try {
-    const data = await itemService.findAll()
+    const data = await itemService.findAll(req.query)
     res.json(data)
   } catch (err) {
     next(err)

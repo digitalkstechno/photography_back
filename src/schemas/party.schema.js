@@ -10,6 +10,10 @@ const partySchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  gst: {
+    type: String,
+    trim: true
+  },
   email: {
     type: String,
     lowercase: true,
