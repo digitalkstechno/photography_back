@@ -6,8 +6,8 @@ class ServiceService extends BaseService {
     super(Service)
   }
 
-  async findAll() {
-    return this.model.find().sort({ name: 1 }).lean()
+  async findAll(filter = {}) {
+    return super.findAll(filter, { sort: { name: 1 } })
   }
 
   async findByType(type) {

@@ -22,59 +22,117 @@ export class BaseService {
     return result
   }
 
-  async findAll(filter = {}, options = {}) {
-    let queryFilter = { ...filter }
-    let queryOptions = { ...options }
+  async findAll(filter, options) {
+    let queryFilter = { ...filter };
+    let queryOptions = { ...options };
 
+    // -------------------------
     // 1. Pagination
+    // -------------------------
     if (queryFilter.page || queryFilter.limit) {
-      const page = Math.max(1, parseInt(queryFilter.page) || 1)
-      const limit = Math.max(1, parseInt(queryFilter.limit) || 10)
-      queryOptions.skip = (page - 1) * limit
-      queryOptions.limit = limit
-      delete queryFilter.page
-      delete queryFilter.limit
+      const page = Math.max(1, parseInt(queryFilter.page) || 1);
+      const limit = Math.max(1, parseInt(queryFilter.limit) || 10);
+
+      queryOptions.skip = (page - 1) * limit;
+      queryOptions.limit = limit;
     }
 
-    // 2. Global Search (Uses this.searchFields defined in child service)
+    // -------------------------
+    // 2. Search (safe)
+    // -------------------------
     if (queryFilter.search !== undefined) {
-      if (queryFilter.search.trim() !== "" && this.searchFields && this.searchFields.length > 0) {
-        const regex = new RegExp(queryFilter.search, 'i')
-        const orConditions = this.searchFields.map(f => ({ [f]: regex }))
-        queryFilter.$or = queryFilter.$or ? [...queryFilter.$or, ...orConditions] : orConditions
+      const search = queryFilter.search?.trim();
+
+      if (search && this.searchFields?.length) {
+        const escapeRegex = (text) =>
+          text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        const regex = new RegExp(escapeRegex(search), 'i');
+
+        queryFilter.$or = this.searchFields.map((field) => ({
+          [field]: regex
+        }));
       }
-      delete queryFilter.search
     }
 
-    // 3. Sorting overrides
+    // -------------------------
+    // 3. Sorting
+    // -------------------------
     if (queryFilter.sort) {
-      queryOptions.sort = queryFilter.sort
-      delete queryFilter.sort
+      queryOptions.sort = queryFilter.sort;
     }
 
-    let query = this.model.find(queryFilter)
-    if (queryOptions.populate) query = query.populate(queryOptions.populate)
-    if (queryOptions.sort) query = query.sort(queryOptions.sort)
-    if (queryOptions.limit) query = query.limit(queryOptions.limit)
-    if (queryOptions.skip) query = query.skip(queryOptions.skip)
+    if (queryFilter.sortBy) {
+      const order = queryFilter.sortOrder === 'desc' ? -1 : 1;
+      queryOptions.sort = { [queryFilter.sortBy]: order };
+    }
 
-    // Execute with parallel count for pagination metadata
+    // -------------------------
+    // 4. REMOVE CONTROL FIELDS ❗ (CRITICAL FIX)
+    // -------------------------
+    const CONTROL_FIELDS = [
+      'page',
+      'limit',
+      'search',
+      'sort',
+      'sortBy',
+      'sortOrder'
+    ];
+
+    CONTROL_FIELDS.forEach(field => delete queryFilter[field]);
+
+    // FINAL FILTER
+    const finalFilter = { ...queryFilter };
+
+    // -------------------------
+    // 🔥 DEBUG (remove later)
+    // -------------------------
+    console.log('FINAL FILTER:', JSON.stringify(finalFilter, null, 2));
+    console.log('OPTIONS:', queryOptions);
+
+    // -------------------------
+    // 5. Build Query
+    // -------------------------
+    let query = this.model.find(finalFilter);
+
+    if (queryOptions.populate) query = query.populate(queryOptions.populate);
+    if (queryOptions.sort) query = query.sort(queryOptions.sort);
+    if (queryOptions.skip !== undefined) query = query.skip(queryOptions.skip);
+    if (queryOptions.limit !== undefined) query = query.limit(queryOptions.limit);
+
+    // -------------------------
+    // 🔥 DEBUG CHECK
+    // -------------------------
+    const debugData = await this.model.find(finalFilter).lean();
+    console.log('DEBUG DATA COUNT:', debugData.length);
+
+    // -------------------------
+    // 6. Execute
+    // -------------------------
     const [data, total] = await Promise.all([
       query.lean(),
-      this.model.countDocuments(queryFilter)
-    ])
+      this.model.countDocuments(finalFilter)
+    ]);
 
-    // If paginated request, return struct. Otherwise raw array for backward compat.
-    if (queryOptions.limit) {
+    console.log('FINAL DATA COUNT:', data.length);
+    console.log('TOTAL COUNT:', total);
+
+    // -------------------------
+    // 7. Response
+    // -------------------------
+    if (queryOptions.limit !== undefined) {
+      const page =
+        Math.floor((queryOptions.skip || 0) / queryOptions.limit) + 1;
+
       return {
         data,
         total,
-        page: queryOptions.skip / queryOptions.limit + 1,
+        page,
         limit: queryOptions.limit
-      }
+      };
     }
 
-    return data
+    return data;
   }
 
   async findById(id, options = {}) {

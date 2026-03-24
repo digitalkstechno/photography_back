@@ -5,9 +5,8 @@ import dotenv from "dotenv"
 import connectDB from "./src/config/db.js"
 import routes from "./src/routes/index.js"
 import { errorHandler } from "./src/middlewares/errorHandler.js"
-
+console.log("MONGO_URI:", process.env.MONGO_URI)
 dotenv.config()
-
 const app = express()
 
 // Middlewares

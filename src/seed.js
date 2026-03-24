@@ -17,7 +17,7 @@ dotenv.config();
 
 const connectDB = async () => {
   try {
-    const mongoUri = process.env.DATABASE_URL || process.env.MONGO_URI || "mongodb://localhost:27017/photography";
+    const mongoUri = "mongodb+srv://photo:23XamLihXQ18bfb4@digitalks.emxt3a4.mongodb.net/photography_studio";
     const conn = await mongoose.connect(mongoUri);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {

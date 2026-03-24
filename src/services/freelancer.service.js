@@ -6,8 +6,8 @@ class FreelancerService extends BaseService {
     super(Freelancer)
   }
 
-  async findAll() {
-    return this.model.find().sort({ name: 1 }).lean()
+  async findAll(filter = {}) {
+    return super.findAll(filter, { sort: { name: 1 } })
   }
 
   async findBySkill(skill) {

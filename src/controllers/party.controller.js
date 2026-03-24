@@ -3,6 +3,7 @@ import { partyService } from "../services/party.service.js"
 export const getParties = async (req, res, next) => {
   try {
     const data = await partyService.findAll(req.query)
+    console.log(data)
     res.json({ success: true, data })
   } catch (err) {
     next(err)

@@ -7,8 +7,10 @@ class PartyService extends BaseService {
     super(Party)
   }
 
-  async findAll() {
-    return this.model.find().sort({ createdAt: -1 }).lean()
+  async findAll(filter = {}, page = 1, limit = 10, search) {
+    const data=await super.findAll(filter, { page, limit, search, sort: { createdAt: -1 } })
+    console.log(data);
+    return data
   }
 
   async getCustomers() {

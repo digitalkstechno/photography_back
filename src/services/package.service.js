@@ -6,8 +6,8 @@ class PackageService extends BaseService {
     super(Package)
   }
 
-  async findAll() {
-    return this.model.find().populate("includedServices").sort({ name: 1 }).lean()
+  async findAll(filter = {}) {
+    return super.findAll(filter, { sort: { name: 1 }, populate: "includedServices" })
   }
 
   async findById(id) {
