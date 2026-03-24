@@ -13,11 +13,12 @@ import Event from "./schemas/event.schema.js";
 import Job from "./schemas/job.schema.js";
 import Payment from "./schemas/payment.schema.js";
 
-dotenv.config();
+dotenv.config({ path: "../.env" });
 
 const connectDB = async () => {
   try {
-    const mongoUri = "";
+    const mongoUri = process.env.MONGO_URI;
+    console.log(mongoUri)
     const conn = await mongoose.connect(mongoUri);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {

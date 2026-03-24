@@ -15,6 +15,7 @@ import calendarRoutes from "./calendar.routes.js"
 import equipmentRoutes from "./equipment.routes.js"
 import dashboardRoutes from "./dashboard.routes.js"
 import teamMemberRoutes from "./teamManagment.rotues.js"
+import printRoutes from "./print.routes.js"
 
 const router = Router()
 
@@ -33,5 +34,6 @@ router.use("/ledger", ledgerRoutes)
 router.use("/calendar", calendarRoutes)
 router.use("/equipments", equipmentRoutes)
 router.use("/dashboard", dashboardRoutes)
+router.use("/prints", printRoutes)
 
 export default router
