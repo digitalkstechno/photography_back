@@ -1,4 +1,5 @@
 import mongoose from "mongoose"
+import { GLOBAL_STATUS_ENUM, SYSTEM_STATUSES } from "../constants/status.constants.js"
 
 const quotationItemSchema = new mongoose.Schema({
   service: {
@@ -65,8 +66,8 @@ const quotationSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["DRAFT", "SENT", "ACCEPTED", "REJECTED", "CONVERTED"],
-    default: "DRAFT"
+    enum: GLOBAL_STATUS_ENUM,
+    default: SYSTEM_STATUSES.DRAFT
   },
   notes: {
     type: String,

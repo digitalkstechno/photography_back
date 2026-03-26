@@ -1,4 +1,5 @@
 import mongoose from "mongoose"
+import { GLOBAL_STATUS_ENUM, SYSTEM_STATUSES } from "../constants/status.constants.js"
 
 const invoiceItemSchema = new mongoose.Schema({
   service: {
@@ -39,8 +40,7 @@ const invoiceSchema = new mongoose.Schema({
   },
   eventId:{
     type:mongoose.Schema.Types.ObjectId,
-    ref: "Event",
-    required: [true, "Event is required"]
+    ref: "Event"
   },
   quotation: {
     type: mongoose.Schema.Types.ObjectId,
@@ -79,8 +79,8 @@ const invoiceSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["PENDING", "PARTIAL", "PAID", "CANCELLED"],
-    default: "PENDING"
+    enum: GLOBAL_STATUS_ENUM,
+    default: SYSTEM_STATUSES.PENDING
   },
   notes: {
     type: String,

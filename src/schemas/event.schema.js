@@ -1,4 +1,5 @@
 import mongoose from "mongoose"
+import { GLOBAL_STATUS_ENUM, SYSTEM_STATUSES } from "../constants/status.constants.js"
 
 const eventSchema = new mongoose.Schema({
   customer: {
@@ -50,8 +51,8 @@ const eventSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["PLANNED", "CONFIRMED", "COMPLETED", "CANCELLED"],
-    default: "PLANNED",
+    enum: GLOBAL_STATUS_ENUM,
+    default: SYSTEM_STATUSES.PLANNED,
   },
 }, {
   timestamps: true

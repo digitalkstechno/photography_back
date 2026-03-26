@@ -1,4 +1,5 @@
 import mongoose from "mongoose"
+import { GLOBAL_STATUS_ENUM, SYSTEM_STATUSES } from "../constants/status.constants.js"
 
 const assignmentSchema = new mongoose.Schema({
   user: {
@@ -40,8 +41,8 @@ const jobSchema = new mongoose.Schema({
   assignedUsers: [assignmentSchema],
   status: {
     type: String,
-    enum: ["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED"],
-    default: "PENDING"
+    enum: GLOBAL_STATUS_ENUM,
+    default: SYSTEM_STATUSES.PENDING
   },
   notes: {
     type: String,
