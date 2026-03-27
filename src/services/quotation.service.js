@@ -1,6 +1,7 @@
 import { BaseService } from "../core/classbase.service.js"
 import Quotation from "../schemas/quotation.schema.js"
 import Service from "../schemas/service.schema.js"
+import { packageService } from "./package.service.js"
 
 // Valid status transitions
 const VALID_TRANSITIONS = {
@@ -65,6 +66,35 @@ class QuotationService extends BaseService {
   }
 
   async beforeCreate(data) {
+    if (!data.items) data.items = [];
+
+    // 🔥 Auto-populate from packages
+    if (data.packages && Array.isArray(data.packages)) {
+      for (const pkgId of data.packages) {
+        const pkg = await packageService.findById(pkgId);
+        if (pkg && pkg.includedServices) {
+          for (const srv of pkg.includedServices) {
+            data.items.push({
+              service: srv._id || srv,
+              days: 1,
+              source: `Package: ${pkg.name}`
+            });
+          }
+        }
+      }
+    }
+
+    // 🔥 Auto-populate from individual services
+    if (data.services && Array.isArray(data.services)) {
+      for (const srvId of data.services) {
+        data.items.push({
+          service: srvId,
+          days: 1,
+          source: "Individual"
+        });
+      }
+    }
+
     data.items = await this.buildItems(data.items)
     data.status = "DRAFT"
     data.discount = data.discount || 0
@@ -81,6 +111,36 @@ class QuotationService extends BaseService {
 
     if (data.status && data.status !== quotation.status) {
       assertTransition(quotation.status, data.status)
+    }
+
+    // 🔥 Auto-populate from packages/services if provided
+    if (data.packages || data.services) {
+      if (!data.items) data.items = [...(quotation.items || [])];
+
+      if (data.packages && Array.isArray(data.packages)) {
+        for (const pkgId of data.packages) {
+          const pkg = await packageService.findById(pkgId);
+          if (pkg && pkg.includedServices) {
+            for (const srv of pkg.includedServices) {
+              data.items.push({
+                service: srv._id || srv,
+                days: 1,
+                source: `Package: ${pkg.name}`
+              });
+            }
+          }
+        }
+      }
+
+      if (data.services && Array.isArray(data.services)) {
+        for (const srvId of data.services) {
+          data.items.push({
+            service: srvId,
+            days: 1,
+            source: "Individual"
+          });
+        }
+      }
     }
 
     if (data.items) {

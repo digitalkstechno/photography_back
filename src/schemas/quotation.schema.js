@@ -1,5 +1,6 @@
 import mongoose from "mongoose"
 import { GLOBAL_STATUS_ENUM, SYSTEM_STATUSES } from "../constants/status.constants.js"
+import { generateId } from "../utils/generateId.util.js"
 
 const quotationItemSchema = new mongoose.Schema({
   service: {
@@ -91,9 +92,7 @@ const quotationSchema = new mongoose.Schema({
 // Auto-calculate totals and generate number before save
 quotationSchema.pre("save", async function () {
   if (!this.quotationNumber) {
-    const count = await mongoose.model("Quotation").countDocuments()
-    const num = (count + 1).toString().padStart(4, "0")
-    this.quotationNumber = `QT-${num}`
+    this.quotationNumber = await generateId("Quotation", "QT")
   }
   
   this.totalAmount = this.items.reduce((sum, item) => sum + item.total, 0)

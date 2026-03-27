@@ -8,7 +8,7 @@ class LedgerService {
     if (!party) throw Object.assign(new Error("Party not found"), { status: 404 })
 
     const payments = await Payment.find({ party: partyId })
-      .populate("event", "eventType startDate")
+      .populate("event", "startDate")
       .sort({ date: 1 })
       .lean()
 

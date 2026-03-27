@@ -27,7 +27,7 @@ class AuthService extends BaseService {
     return { id: user._id, name: user.name, email: user.email, role: user.role }
   }
 
-  async login(email, password) {
+  async login(email, password) {  
     const user = await User.findOne({ email })
     if (!user) throw Object.assign(new Error("User not found"), { status: 404 })
 

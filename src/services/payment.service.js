@@ -11,7 +11,7 @@ class PaymentService extends BaseService {
   getPopulate() {
     return [
       { path: "party", select: "name phone partyType" },
-      { path: "event", select: "eventType startDate title" },
+      { path: "event", select: "startDate title" },
       { path: "invoice", select: "invoiceNumber grandTotal paidAmount status" }
     ]
   }
@@ -27,7 +27,7 @@ class PaymentService extends BaseService {
     return super.findById(id, {
       populate: [
         { path: "party", select: "name phone email partyType" },
-        { path: "event", select: "eventType startDate endDate location title" },
+        { path: "event", select: "startDate endDate location title" },
         { path: "invoice", select: "invoiceNumber grandTotal paidAmount status" }
       ]
     })
@@ -35,7 +35,7 @@ class PaymentService extends BaseService {
 
   async findByParty(partyId) {
     return this.model.find({ party: partyId })
-      .populate("event", "eventType startDate title")
+      .populate("event", "startDate title")
       .populate("invoice", "invoiceNumber grandTotal")
       .sort({ date: -1 })
       .lean()

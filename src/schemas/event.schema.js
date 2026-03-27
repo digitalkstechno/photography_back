@@ -1,5 +1,6 @@
 import mongoose from "mongoose"
 import { GLOBAL_STATUS_ENUM, SYSTEM_STATUSES } from "../constants/status.constants.js"
+import { generateId } from "../utils/generateId.util.js"
 
 const eventSchema = new mongoose.Schema({
   customer: {
@@ -19,11 +20,7 @@ const eventSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Package"
   },
-  eventType: {
-    type: String,
-    enum: ["WEDDING", "HALDI", "MEHNDI", "SANGEET", "RECEPTION", "ENGAGEMENT", "BIRTHDAY", "CORPORATE", "OTHER"],
-    required: [true, "Event type is required"]
-  },
+
   title: {
     type: String,
     trim: true
@@ -61,11 +58,13 @@ const eventSchema = new mongoose.Schema({
 // -------------------------------
 // 🔥 VALIDATION (IMPORTANT)
 // -------------------------------
-eventSchema.pre("save", function (next) {
-  if (this.startDate > this.endDate) {
-    return next(new Error("Start date cannot be after end date"));
+eventSchema.pre("save", async function () {
+  if (!this.title) {
+    this.title = await generateId("Event", "BKG")
   }
-  next();
+  if (this.startDate > this.endDate) {
+    throw new Error("Start date cannot be after end date");
+  }
 });
 
 

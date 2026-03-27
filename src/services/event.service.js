@@ -16,9 +16,7 @@ class EventService extends BaseService {
       { path: "quotation", select: "totalAmount finalAmount status" },
       { path: "invoice", select: "invoiceNumber grandTotal status paidAmount" },
       { path: "package", select: "name price" },
-      { path: "assignments.user", select: "name email phone role" },
-      { path: "assignments.freelancer", select: "name skill chargePerDay phone" },
-      { path: "assignments.equipments", select: "name category serialNumber" },
+      { path: "package", select: "name price" },
     ];
   }
 
@@ -40,7 +38,6 @@ class EventService extends BaseService {
       populate: [
         ...this.getDefaultPopulate(),
         { path: "invoice", select: "invoiceNumber grandTotal status paidAmount items" },
-        { path: "assignments.equipments", select: "name category serialNumber condition" },
       ],
     });
   }
@@ -51,7 +48,7 @@ class EventService extends BaseService {
   async beforeCreate(data) {
     // 🔥 Inject from invoice
     if (data.invoice) {
-      const invoice = await invoiceService.getById(data.invoice);
+      const invoice = await invoiceService.findById(data.invoice);
 
       if (invoice) {
         data.customer = data.customer || invoice.customer;
@@ -69,7 +66,7 @@ class EventService extends BaseService {
       if (conflict && !data.overrideConflicts) {
         throw Object.assign(
           new Error(
-            `Date conflict with "${conflict.eventType}" (${this.formatDate(
+            `Date conflict with "${conflict.title || 'Event'}" (${this.formatDate(
               conflict.startDate
             )} – ${this.formatDate(conflict.endDate)})`
           ),
@@ -95,7 +92,7 @@ class EventService extends BaseService {
       if (conflict && !data.overrideConflicts) {
         throw Object.assign(
           new Error(
-            `Date conflict with "${conflict.eventType}" (${this.formatDate(
+            `Date conflict with "${conflict.title || 'Event'}" (${this.formatDate(
               conflict.startDate
             )})`
           ),

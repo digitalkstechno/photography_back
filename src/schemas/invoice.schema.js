@@ -1,5 +1,6 @@
 import mongoose from "mongoose"
 import { GLOBAL_STATUS_ENUM, SYSTEM_STATUSES } from "../constants/status.constants.js"
+import { generateId } from "../utils/generateId.util.js"
 
 const invoiceItemSchema = new mongoose.Schema({
   service: {
@@ -96,9 +97,7 @@ const invoiceSchema = new mongoose.Schema({
 // Auto-generate invoice number before save
 invoiceSchema.pre("save", async function () {
   if (!this.invoiceNumber) {
-    const count = await mongoose.model("Invoice").countDocuments()
-    const num = (count + 1).toString().padStart(4, "0")
-    this.invoiceNumber = `INV-${num}`
+    this.invoiceNumber = await generateId("Invoice", "INV")
   }
   // Auto-calculate totals
   this.totalAmount = this.items.reduce((sum, item) => sum + item.total, 0)
