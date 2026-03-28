@@ -115,7 +115,7 @@ class QuotationService extends BaseService {
   }
 
   async update(id, data) {
-    const quotation = await this.findById(id)
+    const quotation = await this.model.findById(id)
     if (!quotation) throw Object.assign(new Error("Quotation not found"), { status: 404 })
 
     if (quotation.status === "CONVERTED") {
@@ -160,7 +160,10 @@ class QuotationService extends BaseService {
       data.items = await this.buildItems(data.items)
     }
 
-    return super.update(id, data)
+    // 🔥 Update fields manually and call .save() to trigger calculations
+    Object.assign(quotation, data)
+    await quotation.save()
+    return quotation.toObject()
   }
 
   async remove(id) {
