@@ -5,8 +5,8 @@ import { packageService } from "./package.service.js"
 
 // Valid status transitions
 const VALID_TRANSITIONS = {
-  DRAFT: ["SENT"],
-  SENT: ["ACCEPTED", "REJECTED"],
+  DRAFT: ["SENT", "CONVERTED"],
+  SENT: ["ACCEPTED", "REJECTED", "CONVERTED"],
   ACCEPTED: ["CONVERTED"],
   REJECTED: [],
   CONVERTED: []

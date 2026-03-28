@@ -5,7 +5,9 @@ export const getInvoices = async (req, res, next) => {
     const filter = {}
     if (req.query.status) filter.status = req.query.status.toUpperCase()
     if (req.query.customer) filter.customer = req.query.customer
-    const data = await invoiceService.findAll({ ...filter, ...req.query })
+    
+    // Pass req.query as second argument for pagination
+    const data = await invoiceService.findAll(filter, req.query)
     res.json({ success: true, data })
   } catch (err) {
     next(err)
