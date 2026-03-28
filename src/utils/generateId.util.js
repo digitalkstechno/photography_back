@@ -10,6 +10,20 @@ import mongoose from "mongoose";
  */
 export const generateId = async (modelName, prefix, padLength = 4) => {
   const model = mongoose.model(modelName);
+
+  if (modelName === "Quotation") {
+    const year = new Date().getFullYear();
+    let unique = false;
+    let finalId = "";
+    while (!unique) {
+      const randomNum = Math.floor(1000 + Math.random() * 9000); // 4 digit random
+      finalId = `QT-${year}-${randomNum}`;
+      const existing = await model.findOne({ quotationNumber: finalId });
+      if (!existing) unique = true;
+    }
+    return finalId;
+  }
+
   const count = await model.countDocuments();
   const num = (count + 1).toString().padStart(padLength, "0");
   return `${prefix}-${num}`;

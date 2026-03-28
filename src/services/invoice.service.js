@@ -46,24 +46,35 @@ class InvoiceService extends BaseService {
     const items = [];
 
     for (const item of rawItems) {
-      const service = await serviceService.findById(item.service);
-      if (!service) {
-        throw Object.assign(
-          new Error(`Service ${item.service} not found`),
-          { status: 404 }
-        );
+      if (item.service) {
+        const service = await serviceService.findById(item.service);
+        if (!service) {
+          throw Object.assign(
+            new Error(`Service ${item.service} not found`),
+            { status: 404 }
+          );
+        }
+
+        const pricePerDay = item.pricePerDay || service.pricePerDay;
+        const days = item.days || 1;
+
+        items.push({
+          service: service._id,
+          description: item.description || service.name,
+          days,
+          pricePerDay,
+          total: pricePerDay * days,
+        });
+      } else {
+        // Handle custom items (no database service)
+        items.push({
+          service: null,
+          description: item.description || item.name || "Custom Item",
+          days: item.days || 1,
+          pricePerDay: item.pricePerDay || 0,
+          total: item.total || (item.days * item.pricePerDay) || 0,
+        });
       }
-
-      const pricePerDay = item.pricePerDay || service.pricePerDay;
-      const days = item.days || 1;
-
-      items.push({
-        service: service._id,
-        description: item.description || service.name,
-        days,
-        pricePerDay,
-        total: pricePerDay * days,
-      });
     }
 
     return items;
@@ -95,7 +106,8 @@ class InvoiceService extends BaseService {
 
     const items = quotation.items.map((item) => ({
       service: item.service,
-      description: item.description,
+      // Map 'name' from Quotation item to 'description' for Invoice
+      description: item.name || item.service?.name,
       days: item.days,
       pricePerDay: item.pricePerDay,
       total: item.total,

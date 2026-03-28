@@ -1,4 +1,6 @@
 import { quotationService } from "../services/quotation.service.js"
+import { invoiceService } from "../services/invoice.service.js"
+import { pdfService } from "../services/pdf.service.js"
 
 export const getQuotations = async (req, res, next) => {
   try {
@@ -50,6 +52,31 @@ export const sendQuotation = async (req, res, next) => {
   try {
     const data = await quotationService.sendToCustomer(req.params.id)
     res.json({ success: true, data, message: "Quotation sent to customer" })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export const convertToInvoice = async (req, res, next) => {
+  try {
+    const data = await invoiceService.createFromQuotation(req.params.id)
+    res.json({ success: true, data, message: "Quotation converted to Invoice" })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export const printQuotation = async (req, res, next) => {
+  try {
+    const quotation = await quotationService.findById(req.params.id)
+    if (!quotation) return res.status(404).json({ success: false, message: "Quotation not found" })
+    
+    // Set response headers for direct PDF download
+    res.setHeader("Content-Type", "application/pdf")
+    res.setHeader("Content-Disposition", `attachment; filename=Quotation_${quotation.quotationNumber}.pdf`)
+    
+    // Stream PDF directly to client
+    await pdfService.generateQuotationPdf(quotation, res)
   } catch (err) {
     next(err)
   }

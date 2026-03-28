@@ -6,7 +6,7 @@ const invoiceItemSchema = new mongoose.Schema({
   service: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Service",
-    required: true
+    required: false
   },
   description: {
     type: String,

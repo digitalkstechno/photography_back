@@ -50,48 +50,61 @@ class QuotationService extends BaseService {
   async buildItems(rawItems = []) {
     const items = []
     for (const item of rawItems) {
-      const service = await Service.findById(item.service).lean()
-      if (!service) throw Object.assign(new Error(`Service ${item.service} not found`), { status: 404 })
-
-      const pricePerDay = item.pricePerDay || service.pricePerDay
-      const days = item.days || 1
+      if (item.service) {
+        const service = await Service.findById(item.service).lean()
+        if (service) {
+          const pricePerDay = item.pricePerDay || service.pricePerDay
+          const days = item.days || 1
+          items.push({
+            service: service._id,
+            name: service.name,
+            days,
+            pricePerDay,
+            total: pricePerDay * days,
+            source: item.source || "Individual"
+          })
+          continue
+        }
+      }
+      
+      // Custom or unknown service - use provided data
       items.push({
-        service: service._id,
-        days,
-        pricePerDay,
-        total: pricePerDay * days
+        ...item,
+        total: item.quotedPrice != null ? item.quotedPrice : (item.fixedPrice || (item.days * (item.pricePerDay || 0)))
       })
     }
     return items
   }
 
   async beforeCreate(data) {
-    if (!data.items) data.items = [];
+    if (!data.items || data.items.length === 0) {
+      data.items = []
 
-    // 🔥 Auto-populate from packages
-    if (data.packages && Array.isArray(data.packages)) {
-      for (const pkgId of data.packages) {
-        const pkg = await packageService.findById(pkgId);
-        if (pkg && pkg.includedServices) {
-          for (const srv of pkg.includedServices) {
-            data.items.push({
-              service: srv._id || srv,
-              days: 1,
-              source: `Package: ${pkg.name}`
-            });
+      // 🔥 Auto-populate from packages ONLY if items is empty
+      if (data.packages && Array.isArray(data.packages)) {
+        for (const pkgId of data.packages) {
+          const pkg = await packageService.findById(pkgId);
+          if (pkg && pkg.includedServices) {
+            for (const srv of pkg.includedServices) {
+              data.items.push({
+                service: srv._id || srv,
+                days: 1,
+                source: "Package"
+              });
+            }
           }
         }
       }
-    }
 
-    // 🔥 Auto-populate from individual services
-    if (data.services && Array.isArray(data.services)) {
-      for (const srvId of data.services) {
-        data.items.push({
-          service: srvId,
-          days: 1,
-          source: "Individual"
-        });
+      // 🔥 Auto-populate from services ONLY if items is empty
+      if (data.services && Array.isArray(data.services)) {
+        for (const srvId of data.services) {
+          data.items.push({
+            service: srvId,
+            days: 1,
+            source: "Individual"
+          });
+        }
       }
     }
 
