@@ -60,6 +60,7 @@ export const sendQuotation = async (req, res, next) => {
 export const convertToInvoice = async (req, res, next) => {
   try {
     const data = await invoiceService.createFromQuotation(req.params.id)
+    console.log(data);
     res.json({ success: true, data, message: "Quotation converted to Invoice" })
   } catch (err) {
     next(err)

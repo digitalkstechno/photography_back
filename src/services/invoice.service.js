@@ -142,7 +142,7 @@ export const invoiceService = {
   // -------- CREATE FROM QUOTATION --------
   async createFromQuotation(quotationId) {
     const quotation = await Quotation.findById(quotationId);
-
+    console.log(quotation);
     if (!quotation) {
       throw new Error("Quotation not found");
     }
