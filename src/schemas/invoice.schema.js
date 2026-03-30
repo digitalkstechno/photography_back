@@ -139,6 +139,15 @@ invoiceSchema.pre("save", async function () {
   this.dueAmount = this.grandTotal - (this.paidAmount || 0)
 
   if (this.dueAmount < 0) this.dueAmount = 0
+
+  // 8. Auto Status
+  if (this.paidAmount >= this.grandTotal && this.grandTotal > 0) {
+    this.status = SYSTEM_STATUSES.PAID
+  } else if (this.paidAmount > 0) {
+    this.status = SYSTEM_STATUSES.PARTIALLY_PAID
+  } else {
+    this.status = SYSTEM_STATUSES.PENDING
+  }
 })
 
 // ---------------- INDEX ----------------

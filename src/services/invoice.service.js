@@ -1,34 +1,33 @@
 import Invoice from "../schemas/invoice.schema.js";
 import Quotation from "../schemas/quotation.schema.js";
+import AppError from "../utils/AppError.js";
 
 // ---------------- CALCULATOR (SOURCE OF TRUTH) ----------------
 const calculateInvoice = (data) => {
-  let subtotal = 0;
+  let totalAmount = 0;
 
   const items = (data.items || []).map(item => {
     const days = Number(item.days) || 0;
-    const price = Number(item.pricePerDay);
-    const fixed = Number(item.fixedPrice);
-    const quoted = Number(item.quotedPrice);
-
+    
     let total = 0;
 
-    if (!isNaN(quoted)) {
-      total = quoted;
-    } else if (!isNaN(price)) {
-      total = days * price;
-    } else if (!isNaN(fixed)) {
-      total = fixed;
+    // Use specific checks for null to avoid Number(null) == 0 bug
+    if (item.quotedPrice != null) {
+      total = Number(item.quotedPrice);
+    } else if (item.pricePerDay != null) {
+      total = days * Number(item.pricePerDay);
+    } else if (item.fixedPrice != null) {
+      total = Number(item.fixedPrice);
     }
 
-    subtotal += total;
+    totalAmount += total;
 
     return {
       description: item.name || item.description || "",
       days,
-      pricePerDay: isNaN(price) ? null : price,
-      fixedPrice: isNaN(fixed) ? null : fixed,
-      quotedPrice: isNaN(quoted) ? null : quoted,
+      pricePerDay: item.pricePerDay,
+      fixedPrice: item.fixedPrice,
+      quotedPrice: item.quotedPrice,
       total
     };
   });
@@ -38,12 +37,12 @@ const calculateInvoice = (data) => {
 
   let discountAmount =
     discountType === "percent"
-      ? (subtotal * discount) / 100
+      ? (totalAmount * discount) / 100
       : discount;
 
-  if (discountAmount > subtotal) discountAmount = subtotal;
+  if (discountAmount > totalAmount) discountAmount = totalAmount;
 
-  const finalAmount = subtotal - discountAmount;
+  const finalAmount = totalAmount - discountAmount;
 
   const taxPercent = Number(data.taxPercent) || 0;
   const taxAmount = (finalAmount * taxPercent) / 100;
@@ -55,12 +54,12 @@ const calculateInvoice = (data) => {
 
   // 🔥 Auto status logic
   let status = "PENDING";
-  if (paidAmount > 0 && paidAmount < grandTotal) status = "PARTIAL";
+  if (paidAmount > 0 && paidAmount < grandTotal) status = "PARTIALLY_PAID";
   if (paidAmount >= grandTotal) status = "PAID";
 
   return {
     items,
-    subtotal,
+    totalAmount,
     discountAmount,
     taxAmount,
     grandTotal,
@@ -73,7 +72,7 @@ const calculateInvoice = (data) => {
 const sanitize = (payload) => {
   const clean = { ...payload };
 
-  delete clean.subtotal;
+  delete clean.totalAmount;
   delete clean.discountAmount;
   delete clean.taxAmount;
   delete clean.grandTotal;
@@ -121,11 +120,11 @@ export const invoiceService = {
   // -------- CREATE --------
   async create(payload) {
     if (!payload.customer) {
-      throw new Error("Customer is required");
+      throw new AppError("Customer is required to generate an invoice", 400, { customer: "Missing" });
     }
 
     if (!Array.isArray(payload.items) || payload.items.length === 0) {
-      throw new Error("At least one item is required");
+      throw new AppError("At least one service/item must be added", 400, { items: "Required" });
     }
 
     const clean = sanitize(payload);
@@ -142,9 +141,8 @@ export const invoiceService = {
   // -------- CREATE FROM QUOTATION --------
   async createFromQuotation(quotationId) {
     const quotation = await Quotation.findById(quotationId);
-    console.log(quotation);
     if (!quotation) {
-      throw new Error("Quotation not found");
+      throw new AppError("Quotation not found. Please verify the link.", 404);
     }
 
     const payload = {
@@ -162,7 +160,7 @@ export const invoiceService = {
     const invoice = await Invoice.create({
       ...payload,
       ...calc,
-      quotationId: quotation._id
+      quotation: quotation._id
     });
 
     return invoice;
@@ -186,12 +184,23 @@ export const invoiceService = {
     return invoice;
   },
 
+  // -------- RECORD PAYMENT --------
+  async recordPayment(id, amount) {
+    const invoice = await Invoice.findById(id);
+    if (!invoice) throw new AppError("Invoice not found", 404);
+
+    invoice.paidAmount = (invoice.paidAmount || 0) + Number(amount);
+    await invoice.save();
+
+    return invoice;
+  },
+
   // -------- DELETE --------
   async remove(id) {
     const invoice = await Invoice.findByIdAndDelete(id);
 
     if (!invoice) {
-      throw new Error("Invoice not found");
+      throw new AppError("Invoice not found", 404);
     }
 
     return true;

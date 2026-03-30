@@ -2,6 +2,7 @@ import { BaseService } from "../core/classbase.service.js"
 import Payment from "../schemas/payment.schema.js"
 import Party from "../schemas/party.schema.js"
 import { invoiceService } from "./invoice.service.js"
+import AppError from "../utils/AppError.js"
 
 class PaymentService extends BaseService {
   constructor() {
@@ -44,7 +45,7 @@ class PaymentService extends BaseService {
   async create(data) {
     // Validate party exists
     const party = await Party.findById(data.party).lean()
-    if (!party) throw Object.assign(new Error("Party not found"), { status: 404 })
+    if (!party) throw new AppError("Party not found", 404);
 
     const payment = await super.create({
       party: data.party,

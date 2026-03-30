@@ -31,6 +31,22 @@ const partySchema = new mongoose.Schema({
   notes: {
     type: String,
     trim: true
+  },
+  bankName: {
+    type: String,
+    trim: true
+  },
+  accountNumber: {
+    type: String,
+    trim: true
+  },
+  ifscCode: {
+    type: String,
+    trim: true
+  },
+  branchName: {
+    type: String,
+    trim: true
   }
 }, {
   timestamps: true

@@ -5,8 +5,8 @@ import Counter from "../schemas/counter.schema.js";
  * Generates an auto-incremented ID for a given Mongoose model.
  * Uses atomic increments via a shared Counter collection to prevent duplicates.
  * 
- * @param {string} modelName - The name of the Mongoose model (e.g., "Invoice", "Event").
- * @param {string} prefix - The prefix string to append before the number (e.g., "INV", "BKG").
+ * @param {string} modelName - The name of the Mongoose model (e.g., "Invoice", "Event", "Account", "Transaction", "Expense").
+ * @param {string} prefix - The prefix string (e.g., "INV", "ACC", "TXN", "EXP").
  * @param {number} padLength - The number of digits for padding (default is 4).
  * @returns {Promise<string>} The generated ID string (e.g., "INV-0001").
  */

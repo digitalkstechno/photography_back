@@ -2,15 +2,21 @@ import Event from "../schemas/event.schema.js"
 
 class CalendarService {
 
-  async getEventsByRange(startDate, endDate) {
-    return Event.find({
+  async getEventsByRange(startDate, endDate, search = "") {
+    const query = {
       status: { $ne: "CANCELLED" },
       $or: [
         { startDate: { $gte: new Date(startDate), $lte: new Date(endDate) } },
         { endDate: { $gte: new Date(startDate), $lte: new Date(endDate) } },
         { startDate: { $lte: new Date(startDate) }, endDate: { $gte: new Date(endDate) } }
       ]
-    })
+    };
+
+    if (search) {
+      query.title = { $regex: search, $options: "i" };
+    }
+
+    return Event.find(query)
       .populate("customer", "name phone")
       .populate("package", "name")
       .sort({ startDate: 1 })
